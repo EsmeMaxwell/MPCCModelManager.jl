@@ -2,9 +2,17 @@
 
 # Should take a specification of indexing and return the sparsity and functions.  User may then call multiple times.
 
+# 20220726 TODO : for some inexplicable reason, there still type instability in hessci, etc, despite explicit declaration in comprehension.
+# Had tested similar ideas on the REPL and it works fine, so no idea why it's messed-up here. But it's enough to get empty spare arrays
+# printing in the REPL.
 
-function mpccmodel_setup_symdiff_sparse(config::MPCCModelConfig)
 
+function mpccmodel_setup_symdiff_sparse(config::MPCCModelConfig, Tf::Type)
+
+    # Tf == "Type force"
+    @assert Tf <: Number "Tf should be a subtype of Number"
+    @assert isconcretetype(Tf) "Tf must be a concrete type"
+    
     # NOTE indexed versions will be slower as they call, sequentially, a vector of
     # already built functions, in sequence.
 
@@ -211,8 +219,10 @@ function mpccmodel_setup_symdiff_sparse(config::MPCCModelConfig)
     # f, ce, ci, F all return usual dense vectors/matrices because they are, well, dense.
 
     # Full f functions (really just converting a 1 element vector to a scalar)
+    capture_f = config.fns.f
     function local_f(x::Vector{S}, pr::Vector{T}, ps::Vector{Int64}) where {S <: Real, T <: Real}
-        return fns.f(x, pr, ps)[1]
+        # return fns.f(x, pr, ps)[1]
+        return capture_f(x, pr, ps)[1]
     end
 
 
@@ -276,13 +286,13 @@ function mpccmodel_setup_symdiff_sparse(config::MPCCModelConfig)
 
 
     # hessci functions
-    function local_hessci(x::Vector{S}, pr::Vector{T}, ps::Vector{Int64}) where {S <: Real, T <: Real}                
-        return mm_sym_sp_hessci(dimspec, hessci_sparse_fn, x, pr, ps)
+    function local_hessci(x::Vector{S}, pr::Vector{T}, ps::Vector{Int64}) where {S <: Real, T <: Real}
+        return mm_sym_sp_hessci(dimspec, Tf, hessci_sparse_fn, x, pr, ps)
     end
 
 
     # hessF functions
-    function local_hessF(x::Vector{S}, pr::Vector{T}, ps::Vector{Int64}) where {S <: Real, T <: Real}                
+    function local_hessF(x::Vector{S}, pr::Vector{T}, ps::Vector{Int64}) where {S <: Real, T <: Real}
         return mm_sym_sp_hessF(dimspec, hessF_sparse_fn, x, pr, ps)
     end
 
@@ -404,13 +414,19 @@ end
 function mm_sym_sp_hessce(dimspec::MPCCDimSpec, fn_hessce::AbstractVector, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
     @unpack me = dimspec
     hessce = [ fn_hessce[lp_me][1](x, pr, ps) for lp_me in 1:me ]
+    for lp_me=1:me
+        nt_types = sp_getparamtypes(hessce[lp_me])
+        if !(nt_types.T <: Number)
+            hessce[lp_me] = SparseMatrixCSC{Number, nt_types.S}(hessce[lp_me])
+        end
+    end 
     return hessce
 end
 
 
-function mm_sym_sp_hessci(dimspec::MPCCDimSpec, fn_hessci::AbstractVector, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
+function mm_sym_sp_hessci(dimspec::MPCCDimSpec, Tf::Type, fn_hessci::AbstractVector, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
     @unpack mi = dimspec
-    hessci = [ fn_hessci[lp_mi][1](x, pr, ps) for lp_mi in 1:mi ]
+    hessci = SparseMatrixCSC{Tf, Int64}[ fn_hessci[lp_mi][1](x, pr, ps) for lp_mi in 1:mi ]
     return hessci
 end
 
@@ -418,6 +434,17 @@ end
 function mm_sym_sp_hessF(dimspec::MPCCDimSpec, fn_hessF::AbstractMatrix, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
     @unpack n, l, q = dimspec
     hessF = [ fn_hessF[lp_l, lp_q][1](x, pr, ps) for lp_l in 1:l, lp_q in 1:q ]        # Call each (l,q) function, the [1] is the non-mutating version
+    for lp_q=1:q
+        for lp_l=1:l
+            nt_types = sp_getparamtypes(hessF[lp_l, lp_q])
+            println("at $lp_l, $lp_q")
+            println(nt_types)
+            if !(nt_types.T <: Number)
+                println("fixing...")
+                hessF[lp_l, lp_q] = SparseMatrixCSC{Number, nt_types.S}(hessF[lp_l, lp_q])
+            end
+        end
+    end 
     return hessF
 end
 

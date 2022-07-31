@@ -13,12 +13,20 @@ export  MPCCDimSpec,
         MPCCModelTestVector,
         MPCCModelNZMask,        
         MPCCModelConfig,
-        MPCCModel,
+        AbstractMPCCModel,
+        AbstractMPCCModelDense,
+        AbstractMPCCModelSparse,
+        MPCCModelDenseForwardDiff,
+        MPCCModelSparseSym,
         MPCCJumpFixedFunctions,
         MPCCNewtonPenaltyFunctions
 
 # Trick from https://discourse.julialang.org/t/aliases-for-union-t-nothing-and-union-t-missing/15402/15
 const Opt{T} = Union{Missing,T}
+
+
+# Get type parameters from instance of SparseMetrixCSC
+sp_getparamtypes(mtrx::SparseMatrixCSC{TT, SS}) where {TT, SS} = NamedTuple{(:T, :S)}((TT, SS))
 
 
 

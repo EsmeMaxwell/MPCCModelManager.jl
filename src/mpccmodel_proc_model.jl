@@ -32,31 +32,31 @@ function mpccmodel_build_fn_from_defn(dimspec::MPCCDimSpec, defnnum::MPCCDefinit
     end
 
     # Objective fn
-    f_fn = build_function([ defnnum.f ], x, pr, ps; expression=Val{false})
+    f_fn = build_function([ defnnum.f ], x, pr, ps; expression=Val{false}, linenumbers=false)
 
     # Whole vector / array functions
-    ce_fn = build_function(defnnum.ce, x, pr, ps; expression=Val{false})
-    ci_fn = build_function(defnnum.ci, x, pr, ps; expression=Val{false})
+    ce_fn = build_function(defnnum.ce, x, pr, ps; expression=Val{false}, linenumbers=false)
+    ci_fn = build_function(defnnum.ci, x, pr, ps; expression=Val{false}, linenumbers=false)
     if ( l == 0 || q == 0 )
         # Workaround for wee bug in Symbolics when trying to compile empty matrix
         # it produces keech. So we hand it an empty vector instead.
-        F_fn = build_function(Vector{Num}([]), x, pr, ps; expression=Val{false})
+        F_fn = build_function(Vector{Num}([]), x, pr, ps; expression=Val{false}, linenumbers=false)
     else
-        F_fn = build_function(defnnum.F, x, pr, ps; expression=Val{false})
+        F_fn = build_function(defnnum.F, x, pr, ps; expression=Val{false}, linenumbers=false)
     end
-    Fq_fn = build_function(Fq, x, pr, ps; expression=Val{false})
+    Fq_fn = build_function(Fq, x, pr, ps; expression=Val{false}, linenumbers=false)
 
     # Indexed functions (need to separate std from mutating versions with [1] and [2])
     ce_i_fn = Vector{Tuple{Function, Function}}(undef, me)
     for lp_ce=1:me
-        ce_i_fn[lp_ce] = build_function([ defnnum.ce[lp_ce] ], x, pr, ps; expression=Val{false})
+        ce_i_fn[lp_ce] = build_function([ defnnum.ce[lp_ce] ], x, pr, ps; expression=Val{false}, linenumbers=false)
     end
     ce_i_fn_std = [ ce_i_fn[lp_ce][1] for lp_ce=1:me ]
     ce_i_fn_mut = [ ce_i_fn[lp_ce][2] for lp_ce=1:me ]
 
     ci_i_fn = Vector{Tuple{Function, Function}}(undef, mi)
     for lp_ci=1:mi
-        ci_i_fn[lp_ci] = build_function([ defnnum.ci[lp_ci] ], x, pr, ps; expression=Val{false})
+        ci_i_fn[lp_ci] = build_function([ defnnum.ci[lp_ci] ], x, pr, ps; expression=Val{false}, linenumbers=false)
     end
     ci_i_fn_std = [ ci_i_fn[lp_ci][1] for lp_ci=1:mi ]
     ci_i_fn_mut = [ ci_i_fn[lp_ci][2] for lp_ci=1:mi ]
@@ -64,7 +64,7 @@ function mpccmodel_build_fn_from_defn(dimspec::MPCCDimSpec, defnnum::MPCCDefinit
     F_i_fn = Matrix{Tuple{Function, Function}}(undef, l, q)
     for lp_q=1:q
         for lp_l=1:l
-            F_i_fn[lp_l, lp_q] = build_function([ defnnum.F[lp_l, lp_q] ], x, pr, ps; expression=Val{false})
+            F_i_fn[lp_l, lp_q] = build_function([ defnnum.F[lp_l, lp_q] ], x, pr, ps; expression=Val{false}, linenumbers=false)
         end
     end
     F_i_fn_std = [ F_i_fn[lp_l, lp_q][1] for lp_l=1:l, lp_q=1:q ]
@@ -72,7 +72,7 @@ function mpccmodel_build_fn_from_defn(dimspec::MPCCDimSpec, defnnum::MPCCDefinit
 
     Fq_i_fn = Vector{Tuple{Function, Function}}(undef, q)
     for lp_q=1:q
-        Fq_i_fn[lp_q] = build_function([ Fq[lp_q] ], x, pr, ps; expression=Val{false})
+        Fq_i_fn[lp_q] = build_function([ Fq[lp_q] ], x, pr, ps; expression=Val{false}, linenumbers=false)
     end
     Fq_i_fn_std = [ Fq_i_fn[lp_q][1] for lp_q=1:q ]
     Fq_i_fn_mut = [ Fq_i_fn[lp_q][2] for lp_q=1:q ]

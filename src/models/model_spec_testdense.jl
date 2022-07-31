@@ -724,7 +724,13 @@ function mm_spec_testdense_knownsols()
 end
 
 
-function mm_spec_testdense_parameterisations()
-    return Vector{MPCCModelParameterisation}(undef, 0)
+function mm_spec_testdense_parameterisations(t)
+    defn1 = MPCCParameterisationDefn(
+            Vector{Num}([ t, 2t ]),
+            (-1e9, 1e9),
+            "Standard"    
+        )
+
+    return  Vector{MPCCParameterisationDefn}( [ defn1 ] )
 end
 
