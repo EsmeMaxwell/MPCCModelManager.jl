@@ -144,13 +144,13 @@ function mpccmodel_load_defn_from_file(model_id::String)
     # Need to setup these function variables from strings then we'll later use invokelatest
     src_fn_dimspec = "mm_spec_" * model_id * "_dimspec"
     src_fn_defn = "mm_spec_" * model_id * "_defn"
-    src_fn_nzmask = "mm_spec_" * model_id * "_nzmask"
+    # src_fn_nzmask = "mm_spec_" * model_id * "_nzmask"
     src_fn_testvectors = "mm_spec_" * model_id * "_testvectors"
     src_fn_knownsols = "mm_spec_" * model_id * "_knownsols"
     src_fn_param_defns = "mm_spec_" * model_id * "_parameterisations"
     fn_dimspec = getfield(@__MODULE__, Symbol(src_fn_dimspec))
     fn_defn = getfield(@__MODULE__, Symbol(src_fn_defn))
-    fn_nzmask = getfield(@__MODULE__, Symbol(src_fn_nzmask))
+    # fn_nzmask = getfield(@__MODULE__, Symbol(src_fn_nzmask))
     fn_testvectors = getfield(@__MODULE__, Symbol(src_fn_testvectors))
     fn_knownsols = getfield(@__MODULE__, Symbol(src_fn_knownsols))
     fn_param_defns = getfield(@__MODULE__, Symbol(src_fn_param_defns))
@@ -171,7 +171,7 @@ function mpccmodel_load_defn_from_file(model_id::String)
     # Build parameterisations
     parameterisations = mpccmodel_build_parameterisation(param_defns, t)
 
-    nzmask = Base.invokelatest(fn_nzmask)
+    # nzmask = Base.invokelatest(fn_nzmask)
     testvectors = Base.invokelatest(fn_testvectors)
     knownsols = Base.invokelatest(fn_knownsols)
 
@@ -180,7 +180,7 @@ function mpccmodel_load_defn_from_file(model_id::String)
         dimspec,
         defn,
         fns,
-        nzmask,
+        # nzmask,
         testvectors,
         knownsols,
         parameterisations

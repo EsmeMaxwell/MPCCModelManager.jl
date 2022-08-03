@@ -11,7 +11,7 @@ export  MPCCDimSpec,
         MPCCPointEvalReq,
         MPCCPointEval,
         MPCCModelTestVector,
-        MPCCModelNZMask,        
+        # MPCCModelNZMask,        
         MPCCModelConfig,
         AbstractMPCCModel,
         AbstractMPCCModelDense,
@@ -263,12 +263,12 @@ Base.:(≈)(x::MPCCPointEval, y::MPCCPointEval) = (
 
 
 
-# An aid for plotting only, determines which variables are used in which constraints
-struct MPCCModelNZMask
-    ce::Vector{Set{Int64}}
-    ci::Vector{Set{Int64}}
-    F::Vector{Vector{Set{Int64}}}
-end
+# # An aid for plotting only, determines which variables are used in which constraints
+# struct MPCCModelNZMask
+#     ce::Vector{Set{Int64}}
+#     ci::Vector{Set{Int64}}
+#     F::Vector{Vector{Set{Int64}}}
+# end
 
 
 struct MPCCModelTestVector{R <: Real, S <: Real, T <: Real}
@@ -333,7 +333,7 @@ struct MPCCModelConfig
     dimspec::MPCCDimSpec
     defn::MPCCDefinition
     fns::MPCCFunctions
-    nzmask::Opt{MPCCModelNZMask}
+    # nzmask::Opt{MPCCModelNZMask}
     testvectors::Vector{MPCCModelTestVector}
     knownsols::Vector{Function}
     parameterisations::MPCCParameterisations

@@ -24,22 +24,22 @@ end
 
 
 
-function mm_spec_kj6_nzmask()::MPCCModelNZMask
-    nz_mask = MPCCModelNZMask(
-        # ce
-        [],
-        # ci
-        [   Set{Int64}([1, 2]),
-            Set{Int64}([1]) ],
-        # F
-        [ 
-            # F1
-            [   Set{Int64}([1]) ],
-            # F2
-            [   Set{Int64}([2]) ] 
-        ] )    
-    return nz_mask
-end
+# function mm_spec_kj6_nzmask()::MPCCModelNZMask
+#     nz_mask = MPCCModelNZMask(
+#         # ce
+#         [],
+#         # ci
+#         [   Set{Int64}([1, 2]),
+#             Set{Int64}([1]) ],
+#         # F
+#         [ 
+#             # F1
+#             [   Set{Int64}([1]) ],
+#             # F2
+#             [   Set{Int64}([2]) ] 
+#         ] )    
+#     return nz_mask
+# end
 
 
 function mm_spec_kj6_testvectors()

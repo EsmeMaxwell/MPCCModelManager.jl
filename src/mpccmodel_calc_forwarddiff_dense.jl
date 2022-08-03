@@ -704,6 +704,13 @@ end
 # Full gradce functions
 function mm_fd_dn_gradce(dimspec::MPCCDimSpec, ce::Function, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
     P = promote_type(S, T)
+
+    # Shortcut for empty result: ensures type stable (fails assert with FD), and gets dimensions correct
+    if 0 == dimspec.me
+        return Matrix{P}(undef, 0, dimspec.n)
+    end
+
+    # Create closure and do FD calc
     local_ce = (z::AbstractArray) -> ce(z, pr, ps)
     return ForwardDiff.jacobian(local_ce, x)::Matrix{P}
 end
@@ -750,6 +757,13 @@ end
 # Full gradci functions
 function mm_fd_dn_gradci(dimspec::MPCCDimSpec, ci::Function, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
     P = promote_type(S, T)
+
+    # Shortcut for empty result: ensures type stable (fails assert with FD), and gets dimensions correct
+    if 0 == dimspec.mi
+        return Matrix{P}(undef, 0, dimspec.n)
+    end
+
+    # Create closure and do FD calc    
     local_ci = (z::AbstractArray) -> ci(z, pr, ps)
     return ForwardDiff.jacobian(local_ci, x)::Matrix{P}
 end
@@ -800,6 +814,12 @@ end
 function mm_fd_dn_gradF(dimspec::MPCCDimSpec, F::Function, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}   # ::Matrix{Vector{S}}
     P = promote_type(S, T)
     @unpack n, l, q = dimspec
+
+    # Shortcut for empty result: ensures type stable (fails assert with FD), and gets dimensions correct
+    if ( 0 == dimspec.l || 0 == dimspec.q )
+        return Matrix{Vector{P}}(undef, dimspec.l, dimspec.q)
+    end
+
     # ForwardDiff.jacobian can work with multidimensional arrays, so we do that
     local_F = (z::AbstractArray) -> F(z, pr, ps)
     gradF_flat = ForwardDiff.jacobian(local_F, x)::Matrix{P}
@@ -859,7 +879,13 @@ end
 # Full gradFq functions
 function mm_fd_dn_gradFq(dimspec::MPCCDimSpec, Fq::Function, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
     P = promote_type(S, T)
-    local_Fq = (z::AbstractArray) -> Fq(z, pr, ps)    
+
+    # Shortcut for empty result: ensures type stable (fails assert with FD), and gets dimensions correct
+    if ( 0 == dimspec.l || 0 == dimspec.q )
+        return Matrix{P}(undef, dimspec.q, dimspec.n)
+    end
+    
+    local_Fq = (z::AbstractArray) -> Fq(z, pr, ps) 
     # return convert(Matrix{promote_type(S, T)}, ForwardDiff.jacobian(local_Fq, x))
     return ForwardDiff.jacobian(local_Fq, x)::Matrix{P}
 end
@@ -1134,13 +1160,15 @@ end
 # fdp functions
 
 function mm_fd_dn_fdp(dimspec::MPCCDimSpec, f::Function, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}   # ::AbstractVector{T}
+    @assert dimspec.r > 0 "r must be positive for parametric calls"
     P = promote_type(S, T)
     local_f(qr) = f(x, qr, ps)[1]
-    return ForwardDiff.gradient(local_f, pr)::Matrix{P}
+    return ForwardDiff.gradient(local_f, pr)::Vector{P}
 end
 
 
 function mm_fd_dn_fdp!(out_fdp::AbstractArray, dimspec::MPCCDimSpec, f::Function, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64})::Nothing where {S <: Real, T <: Real}
+    @assert dimspec.r > 0 "r must be positive for parametric calls"
     local_f(z) = f(z, pr, ps)[1]
     ForwardDiff.gradient!(out_fdp, local_f, x)
     return nothing
@@ -1154,8 +1182,15 @@ end
 # Full cedp functions
 # # Vector of length r of vectors of length me
 function mm_fd_dn_cedp(dimspec::MPCCDimSpec, ce::Function, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}    
+    @assert dimspec.r > 0 "r must be positive for parametric calls"
     P = promote_type(S, T)
     @unpack me, r = dimspec
+
+    # Shortcut for empty result: ensures type stable (fails assert with FD), and gets dimensions correct
+    if ( 0 == me )
+        return Vector{P}[ Vector{P}(undef, 0) for lp_r=1:r ]
+    end
+
     local_ce = (qr::AbstractArray) -> ce(x, qr, ps)
     temp_cedp = ForwardDiff.jacobian(local_ce, pr)::Matrix{P}
     cedp = [ [ temp_cedp[lp_me, lp_r] for lp_me in 1:me ] for lp_r in 1:r ]
@@ -1164,6 +1199,7 @@ end
 
 
 function mm_fd_dn_cedp!(out_cedp::AbstractArray, dimspec::MPCCDimSpec, ce!::Function, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64})::Nothing where {S <: Real, T <: Real}
+    @assert dimspec.r > 0 "r must be positive for parametric calls"
     @unpack me, r = dimspec
     local_ce! = (y::AbstractArray, qr::AbstractArray) -> ce!(y, x, qr, ps)
 
@@ -1183,6 +1219,7 @@ end
 
 # Indexed cedp functions
 function mm_fd_dn_cedp_i(dimspec::MPCCDimSpec, ce_i::AbstractVector{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ce::AbstractVector{Int64}) where {F <: Function, S <: Real, T <: Real}
+    @assert dimspec.r > 0 "r must be positive for parametric calls"
     P = promote_type(S, T)
     @unpack r = dimspec
     len_idxs_ce_i = length(idxs_ce)
@@ -1193,6 +1230,7 @@ function mm_fd_dn_cedp_i(dimspec::MPCCDimSpec, ce_i::AbstractVector{F}, x::Abstr
 end
 
 function mm_fd_dn_cedp_i!(out_cedp::AbstractArray, dimspec::MPCCDimSpec, ce_i!::AbstractVector{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ce::AbstractVector{Int64})::Nothing where {F <: Function, S <: Real, T <: Real}
+    @assert dimspec.r > 0 "r must be positive for parametric calls"
     @unpack me, r = dimspec
     len_idxs_ce_i = length(idxs_ce)
     local_ce! = (y::AbstractArray, qr::AbstractArray) -> mm_fd_dn_ce_i!(y, dimspec, ce_i!, x, qr, ps, idxs_ce)
@@ -1217,8 +1255,15 @@ end
 # Full cidp functions
 # # Vector of length r of vectors of length mi
 function mm_fd_dn_cidp(dimspec::MPCCDimSpec, ci::Function, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}    
+    @assert dimspec.r > 0 "r must be positive for parametric calls"
     P = promote_type(S, T)
     @unpack mi, r = dimspec
+
+    # Shortcut for empty result: ensures type stable (fails assert with FD), and gets dimensions correct
+    if ( 0 == mi )
+        return Vector{P}[ Vector{P}(undef, 0) for lp_r=1:r ]
+    end
+
     local_ci = (qr::AbstractArray) -> ci(x, qr, ps)
     temp_cidp = ForwardDiff.jacobian(local_ci, pr)::Matrix{P}
     cidp = [ [ temp_cidp[lp_mi, lp_r] for lp_mi in 1:mi ] for lp_r in 1:r ]
@@ -1227,6 +1272,7 @@ end
 
 
 function mm_fd_dn_cidp!(out_cidp::AbstractArray, dimspec::MPCCDimSpec, ci!::Function, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64})::Nothing where {S <: Real, T <: Real}
+    @assert dimspec.r > 0 "r must be positive for parametric calls"
     @unpack mi, r = dimspec
     local_ci! = (y::AbstractArray, qr::AbstractArray) -> ci!(y, x, qr, ps)
 
@@ -1246,6 +1292,7 @@ end
 
 # Indexed cidp functions
 function mm_fd_dn_cidp_i(dimspec::MPCCDimSpec, ci_i::AbstractVector{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ci::AbstractVector{Int64}) where {F <: Function, S <: Real, T <: Real}
+    @assert dimspec.r > 0 "r must be positive for parametric calls"
     P = promote_type(S, T)
     @unpack r = dimspec
     len_idxs_ci_i = length(idxs_ci)
@@ -1256,6 +1303,7 @@ function mm_fd_dn_cidp_i(dimspec::MPCCDimSpec, ci_i::AbstractVector{F}, x::Abstr
 end
 
 function mm_fd_dn_cidp_i!(out_cidp::AbstractArray, dimspec::MPCCDimSpec, ci_i!::AbstractVector{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ci::AbstractVector{Int64})::Nothing where {F <: Function, S <: Real, T <: Real}
+    @assert dimspec.r > 0 "r must be positive for parametric calls"
     @unpack mi, r = dimspec
     len_idxs_ci_i = length(idxs_ci)
     local_ci! = (y::AbstractArray, qr::AbstractArray) -> mm_fd_dn_ci_i!(y, dimspec, ci_i!, x, qr, ps, idxs_ci)
@@ -1282,8 +1330,14 @@ end
 # Full Fdp functions
 
 function mm_fd_dn_Fdp(dimspec::MPCCDimSpec, F::Function, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
+    @assert dimspec.r > 0 "r must be positive for parametric calls"
     P = promote_type(S, T)
     @unpack n, l, q, r = dimspec
+
+    # Shortcut for empty result: ensures type stable (fails assert with FD), and gets dimensions correct
+    if ( 0 == l || 0 == q )
+        return Vector{P}[ Matrix{P}(undef, l, q) for lp_r=1:r ]
+    end    
 
     # ForwardDiff.jacobian can work with multidimensional arrays, so we do that
     local_F = (qr::AbstractArray) -> F(x, qr, ps)
@@ -1298,6 +1352,7 @@ end
 
 
 function mm_fd_dn_Fdp!(out_Fdp::AbstractArray, dimspec::MPCCDimSpec, F!::Function, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64})::Nothing where {S <: Real, T <: Real}
+    @assert dimspec.r > 0 "r must be positive for parametric calls"
     @unpack n, l, q, r = dimspec
 
     # ForwardDiff.jacobian can work with multidimensional arrays, so we do that
@@ -1317,6 +1372,7 @@ end
 
 # Indexed Fdp
 function mm_fd_dn_Fdp_i(dimspec::MPCCDimSpec, F_i::AbstractMatrix{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_F::Vector{CartesianIndex{2}}) where {F <: Function, S <: Real, T <: Real}
+    @assert dimspec.r > 0 "r must be positive for parametric calls"
     P = promote_type(S, T)
     @unpack n, l, q, r = dimspec
 
@@ -1332,6 +1388,7 @@ end
 
 
 function mm_fd_dn_Fdp_i!(out_Fdp::AbstractArray, dimspec::MPCCDimSpec, F_i!::AbstractMatrix{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_F::Vector{CartesianIndex{2}})::Nothing where {F <: Function, S <: Real, T <: Real}
+    @assert dimspec.r > 0 "r must be positive for parametric calls"
     @unpack n, l, q, r = dimspec
 
     len_idxs_F_i = length(idxs_F)
@@ -1357,6 +1414,7 @@ end
 # Full gradfdp functions
 
 function mm_fd_dn_gradfdp(dimspec::MPCCDimSpec, f::Function, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
+    @assert dimspec.r > 0 "r must be positive for parametric calls"
     P = promote_type(S, T)
     @unpack n, r = dimspec
     local_gradf = (qr::AbstractArray) -> mm_fd_dn_gradf(dimspec, f, x, qr, ps)
@@ -1367,6 +1425,7 @@ end
 
 
 function mm_fd_dn_gradfdp!(out_gradfdp::AbstractArray, dimspec::MPCCDimSpec, f::Function, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64})::Nothing where {S <: Real, T <: Real}
+    @assert dimspec.r > 0 "r must be positive for parametric calls"
     @unpack n, r = dimspec
     local_gradf! = (z::AbstractArray, qr::AbstractArray) -> mm_fd_dn_gradf!(z, dimspec, f, x, qr, ps)
     y = zeros(promote_type(S, T), n)
@@ -1385,8 +1444,15 @@ end
 
 # Full gradcedp functions
 function mm_fd_dn_gradcedp(dimspec::MPCCDimSpec, ce::Function, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
+    @assert dimspec.r > 0 "r must be positive for parametric calls"
     P = promote_type(S, T)
     @unpack n, me, r = dimspec
+
+    # Shortcut for empty result: ensures type stable (fails assert with FD), and gets dimensions correct
+    if ( 0 == me )
+        return Matrix{P}[ Matrix{P}(undef, me, n) for lp_r=1:r ]
+    end
+
     local_gradce = (qr::AbstractArray) -> mm_fd_dn_gradce(dimspec, ce, x, qr, ps)
     gradcedp_flat = ForwardDiff.jacobian(local_gradce, pr)::Matrix{P}
     gradcedp = [ reshape(gradcedp_flat[:, lp_pr], (me, n)) for lp_pr in 1:r ]
@@ -1395,6 +1461,7 @@ end
 
 
 function mm_fd_dn_gradcedp!(out_gradcedp::AbstractArray, dimspec::MPCCDimSpec, ce!::Function, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64})::Nothing where {S <: Real, T <: Real}
+    @assert dimspec.r > 0 "r must be positive for parametric calls"
     @unpack n, me, r = dimspec
     local_gradce! = (z::AbstractArray, qr::AbstractArray) -> mm_fd_dn_gradce!(z, dimspec, ce!, x, qr, ps)
 
@@ -1411,6 +1478,7 @@ end
 
 # Indexed gradcedp
 function mm_fd_dn_gradcedp_i(dimspec::MPCCDimSpec, ce_i::AbstractVector{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ce::AbstractVector{Int64}) where {F <: Function, S <: Real, T <: Real}
+    @assert dimspec.r > 0 "r must be positive for parametric calls"
     P = promote_type(S, T)
     @unpack n, me, r = dimspec
     len_idxs_ce_i = length(idxs_ce)
@@ -1423,6 +1491,7 @@ end
 
 
 function mm_fd_dn_gradcedp_i!(out_gradcedp::AbstractArray, dimspec::MPCCDimSpec, ce_i!::AbstractVector{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ce::AbstractVector{Int64})::Nothing where {F <: Function, S <: Real, T <: Real}
+    @assert dimspec.r > 0 "r must be positive for parametric calls"
     @unpack n, me, r = dimspec
     len_idxs_ce_i = length(idxs_ce)
     local_gradce! = (z::AbstractArray, qr::AbstractArray) -> mm_fd_dn_gradce_i!(z, dimspec, ce_i!, x, qr, ps, idxs_ce)
@@ -1445,8 +1514,15 @@ end
 
 # Full gradcidp functions
 function mm_fd_dn_gradcidp(dimspec::MPCCDimSpec, ci::Function, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
+    @assert dimspec.r > 0 "r must be positive for parametric calls"
     P = promote_type(S, T)
     @unpack n, mi, r = dimspec
+
+    # Shortcut for empty result: ensures type stable (fails assert with FD), and gets dimensions correct
+    if ( 0 == mi )
+        return Matrix{P}[ Matrix{P}(undef, mi, n) for lp_r=1:r ]
+    end
+
     local_gradci = (qr::AbstractArray) -> mm_fd_dn_gradci(dimspec, ci, x, qr, ps)
     gradcidp_flat = ForwardDiff.jacobian(local_gradci, pr)::Matrix{P}
     gradcidp = [ reshape(gradcidp_flat[:, lp_pr], (mi, n)) for lp_pr in 1:r ]
@@ -1455,6 +1531,7 @@ end
 
 
 function mm_fd_dn_gradcidp!(out_gradcidp::AbstractArray, dimspec::MPCCDimSpec, ci!::Function, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64})::Nothing where {S <: Real, T <: Real}
+    @assert dimspec.r > 0 "r must be positive for parametric calls"
     @unpack n, mi, r = dimspec
     local_gradci! = (z::AbstractArray, qr::AbstractArray) -> mm_fd_dn_gradci!(z, dimspec, ci!, x, qr, ps)
 
@@ -1471,6 +1548,7 @@ end
 
 # Indexed gradcidp
 function mm_fd_dn_gradcidp_i(dimspec::MPCCDimSpec, ci_i::AbstractVector{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ci::AbstractVector{Int64}) where {F <: Function, S <: Real, T <: Real}
+    @assert dimspec.r > 0 "r must be positive for parametric calls"
     P = promote_type(S, T)
     @unpack n, mi, r = dimspec
     len_idxs_ci_i = length(idxs_ci)
@@ -1482,6 +1560,7 @@ end
 
 
 function mm_fd_dn_gradcidp_i!(out_gradcidp::AbstractArray, dimspec::MPCCDimSpec, ci_i!::AbstractVector{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ci::AbstractVector{Int64})::Nothing where {F <: Function, S <: Real, T <: Real}
+    @assert dimspec.r > 0 "r must be positive for parametric calls"
     @unpack n, mi, r = dimspec
     len_idxs_ci_i = length(idxs_ci)
     local_gradci! = (z::AbstractArray, qr::AbstractArray) -> mm_fd_dn_gradci_i!(z, dimspec, ci_i!, x, qr, ps, idxs_ci)
@@ -1504,6 +1583,7 @@ end
 
 # Full gradFdp functions
 function mm_fd_dn_gradFdp(dimspec::MPCCDimSpec, F_i::AbstractMatrix{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {F <: Function, S <: Real, T <: Real}   # ::Vector{Matrix{Vector{S}}}
+    @assert dimspec.r > 0 "r must be positive for parametric calls"
     P = promote_type(S, T)
     @unpack n, l, q, r = dimspec
     local_gradF_i = Matrix{Function}(undef, l, q)
@@ -1523,6 +1603,7 @@ end
 
 
 function mm_fd_dn_gradFdp!(out_gradFdp::AbstractArray, dimspec::MPCCDimSpec, F_i::AbstractMatrix{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {F <: Function, S <: Real, T <: Real}
+    @assert dimspec.r > 0 "r must be positive for parametric calls"
     @unpack n, l, q, r = dimspec
     local_gradF_i = Matrix{Function}(undef, l, q)
     # Local alloc, should perhaps do in caller
@@ -1553,6 +1634,7 @@ end
 
 # Indexed gradFdp functions
 function mm_fd_dn_gradFdp_i(dimspec::MPCCDimSpec, F_i::AbstractMatrix{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_F::Vector{CartesianIndex{2}}) where {F <: Function, S <: Real, T <: Real}   # ::Vector{Matrix{Vector{S}}}
+    @assert dimspec.r > 0 "r must be positive for parametric calls"
     P = promote_type(S, T)
     @unpack n, l, q, r = dimspec
     len_idxs_F_i = length(idxs_F)
@@ -1574,6 +1656,7 @@ end
 
 
 function mm_fd_dn_gradFdp_i!(out_gradFdp::AbstractArray, dimspec::MPCCDimSpec, F_i::AbstractMatrix{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_F::Vector{CartesianIndex{2}}) where {F <: Function, S <: Real, T <: Real}
+    @assert dimspec.r > 0 "r must be positive for parametric calls"
     @unpack n, l, q, r = dimspec
     len_idxs_F_i = length(idxs_F)
     local_gradF_i = Vector{Function}(undef, len_idxs_F_i)
