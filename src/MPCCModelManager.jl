@@ -27,15 +27,14 @@ include("mpccmodel_pointeval.jl")
 include("mpccmodel_test.jl")
 
 
-export  mpccmodel_build_fn_from_defn,
+export  mpccmodel_build_sym_nums,
+        mpccmodel_build_fn_from_defn,
+        mpccmodel_construct_config,
         mpccmodel_load_defn_from_file,
         mpccmodel_build_fixed_jump_fns,
         mpccmodel_setup_forwarddiff_dense,
         mpccmodel_setup_symdiff_sparse,
-        mpccmodel_setup_newton_penalty,
-        mpccmodel_pointeval_basic,
-        mpccmodel_test_testvectors_evalpt_basic
-
+        mpccmodel_setup_newton_penalty
 
 
 

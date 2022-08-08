@@ -7,11 +7,14 @@
 
 
 export  MPCCDimSpec,
+        MPCCDefinition,
         MPCCFunctions,
         MPCCPointEvalReq,
         MPCCPointEval,
         MPCCModelTestVector,
-        # MPCCModelNZMask,        
+        MPCCParameterisationDefn,
+        MPCCParameterisationFunctions,
+        MPCCParameterisations,
         MPCCModelConfig,
         AbstractMPCCModel,
         AbstractMPCCModelDense,
@@ -67,7 +70,19 @@ end
 
 
 function show(io::IO, ::MIME"text/plain", dimspec::MPCCDimSpec)
-    print("DimSpec[n=$(dimspec.n), me=$(dimspec.me), me=$(dimspec.mi), q=$(dimspec.q), l=$(dimspec.l), r=$(dimspec.r), s=$(dimspec.s)]")
+    # print("DimSpec[n=$(dimspec.n), me=$(dimspec.me), me=$(dimspec.mi), q=$(dimspec.q), l=$(dimspec.l), r=$(dimspec.r), s=$(dimspec.s)]")
+    printstyled("DimSpec: n="; color=:magenta)
+    printstyled(dimspec.n; color=:light_yellow)
+    printstyled(", me="; color=:magenta)
+    printstyled(dimspec.me; color=:light_yellow)
+    printstyled(", mi="; color=:magenta)
+    printstyled(dimspec.mi; color=:light_yellow)
+    printstyled(", q="; color=:magenta)
+    printstyled(dimspec.q; color=:light_yellow)
+    printstyled(", r="; color=:magenta)
+    printstyled(dimspec.r; color=:light_yellow)
+    printstyled(", s="; color=:magenta)
+    printstyled(dimspec.s, "\n"; color=:light_yellow)
 end
 
 
@@ -91,7 +106,46 @@ struct MPCCDefinition
     ce::Vector{Num}
     ci::Vector{Num}
     F::Matrix{Num}
+    label_model::Opt{String}
+    label_f::Opt{String}
+    labels_ce::Vector{Opt{String}}
+    labels_ci::Vector{Opt{String}}
+    labels_F::Vector{Opt{String}}
 end
+
+
+function show(io::IO, ::MIME"text/plain", defn::MPCCDefinition)
+    # Can't bring in an associated dimspec here, so have to count things ourselves.
+    me = length(defn.ce)
+    mi = length(defn.ci)
+    (l, q) = size(defn.F)
+
+    printstyled("---[ MPCCDefinition ]---\n"; color=:magenta)
+    printstyled("Label:\t"; color=:magenta)
+    printstyled(defn.label_model, "\n"; color=:light_cyan)
+    printstyled("Objective function: "; color=:magenta)
+    printstyled(defn.f, ";\t"; color=:light_yellow)
+    printstyled(defn.label_f, "\n"; color=:light_cyan)
+    for lp_me=1:me
+        printstyled("ce[$lp_me]: "; color=:magenta)
+        printstyled(defn.ce[lp_me], ";\t"; color=:light_yellow)
+        printstyled(defn.labels_ce[lp_me], "\n"; color=:light_cyan)
+    end
+    for lp_mi=1:mi
+        printstyled("ci[$lp_mi]: "; color=:magenta)
+        printstyled(defn.ci[lp_mi], ";\t"; color=:light_yellow)
+        printstyled(defn.labels_ci[lp_mi], "\n"; color=:light_cyan)
+    end
+    for lp_q=1:q
+        printstyled("F[:, $lp_q]: "; color=:magenta)
+        printstyled(defn.labels_F[lp_q], "\n"; color=:light_cyan)
+        for lp_l=1:l
+            printstyled("F[$lp_l, $lp_q]: "; color=:magenta)
+            printstyled(defn.F[lp_l, lp_q], "\n"; color=:light_yellow)
+        end
+    end
+end
+
 
 
 
@@ -263,13 +317,6 @@ Base.:(≈)(x::MPCCPointEval, y::MPCCPointEval) = (
 
 
 
-# # An aid for plotting only, determines which variables are used in which constraints
-# struct MPCCModelNZMask
-#     ce::Vector{Set{Int64}}
-#     ci::Vector{Set{Int64}}
-#     F::Vector{Vector{Set{Int64}}}
-# end
-
 
 struct MPCCModelTestVector{R <: Real, S <: Real, T <: Real}
     x_val::Vector{S}
@@ -290,6 +337,18 @@ struct MPCCParameterisationDefn{R <: Real}
     tspan::Tuple{R, R}
     descr::String
 end
+
+
+function show(io::IO, ::MIME"text/plain", pdefn::MPCCParameterisationDefn{R}) where {R <: Real}
+    printstyled("---[ MPCCParameterisationDefn ]---\n"; color=:magenta)
+    printstyled("Label: "; color=:magenta)
+    printstyled(pdefn.descr, "\n"; color=:light_cyan)
+    printstyled("tspan: "; color=:magenta)
+    printstyled(pdefn.tspan, "\n"; color=:light_yellow)
+    printstyled("pr: "; color=:magenta)
+    printstyled(pdefn.pr, "\n"; color=:light_yellow)
+end
+
 
 
 """
@@ -325,6 +384,8 @@ MPCCModelConfig
 Model config contains the Num variables for `x`, `pr`, `ps` along with the
 `MPCCDimSpec`, definition, compiled definition, any test vectors, any known
 solutions, and parameterisations. Basically everything that specifies a model.
+
+- parameterisations: if using a static model with r=0, then this should be set to missing
 """
 struct MPCCModelConfig
     x::Vector{Num}      # Symbolics variables
@@ -333,10 +394,9 @@ struct MPCCModelConfig
     dimspec::MPCCDimSpec
     defn::MPCCDefinition
     fns::MPCCFunctions
-    # nzmask::Opt{MPCCModelNZMask}
+    parameterisations::Opt{MPCCParameterisations}
     testvectors::Vector{MPCCModelTestVector}
     knownsols::Vector{Function}
-    parameterisations::MPCCParameterisations
 end
 
 

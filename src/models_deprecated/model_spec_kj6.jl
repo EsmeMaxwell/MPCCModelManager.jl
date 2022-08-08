@@ -78,5 +78,5 @@ function mm_spec_kj6_parameterisations(t)
             "Standard"    
         )
 
-    return  Vector{MPCCParameterisationDefn}( [ defn1 ] )
+    return Vector{MPCCParameterisationDefn}( [ defn1 ] )
 end

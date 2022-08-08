@@ -1,8 +1,22 @@
 
 
 
+
 """
-    mpccmodel_build_fn_from_defn(dimspec, defnnum, x, pr, ps)
+    mpccmodel_build_sym_nums(dimspec::MPCCDimSpec)
+
+Returns Symbolics.jl Nums that correspond to the provided dimspec.
+"""
+function mpccmodel_build_sym_nums(dimspec::MPCCDimSpec)
+    @variables x[1:dimspec.n] pr[1:dimspec.r] ps[1:dimspec.s] t
+    return NamedTuple{(:x, :pr, :ps, :t)}((x, pr, ps, t))
+end
+
+
+
+
+"""
+    mpccmodel_build_fn_from_defn(dimspec, defn, x, pr, ps)
 
 Assemble `f`, `ce`, `ci`, and `F` Julia native functions from Symbolic
 definition and returns both non-indexed and indexed variants. Generally no need
@@ -16,47 +30,46 @@ code here.
 
 # Arguments
 - `dimspec::MPCCDimSpec`: The dimension specifications for the proram.
-- `defnnum::MPCCDefinition`: The Symbolics.jl Num definitions of the
+- `defn::MPCCDefinition`: The Symbolics.jl Num definitions of the
   expressions.
 - `x`, `pr`, `ps`: Symbolics.jl Num variables for x, pr, ps.
 
 """
-function mpccmodel_build_fn_from_defn(dimspec::MPCCDimSpec, defnnum::MPCCDefinition, x, pr, ps)
-    
+function mpccmodel_build_fn_from_defn(dimspec::MPCCDimSpec, defn::MPCCDefinition, x, pr, ps)
     @unpack n, q, l, me, mi = dimspec
 
     # Before building any functions, we need to setup the Num for Fq (product down columns)
     Fq = Vector{Num}(undef, q)
     for lp_q=1:q
-        Fq[lp_q] = prod(defnnum.F[:, lp_q])
+        Fq[lp_q] = prod(defn.F[:, lp_q])
     end
 
     # Objective fn
-    f_fn = build_function([ defnnum.f ], x, pr, ps; expression=Val{false}, linenumbers=false)
+    f_fn = build_function([ defn.f ], x, pr, ps; expression=Val{false}, linenumbers=false)
 
     # Whole vector / array functions
-    ce_fn = build_function(defnnum.ce, x, pr, ps; expression=Val{false}, linenumbers=false)
-    ci_fn = build_function(defnnum.ci, x, pr, ps; expression=Val{false}, linenumbers=false)
+    ce_fn = build_function(defn.ce, x, pr, ps; expression=Val{false}, linenumbers=false)
+    ci_fn = build_function(defn.ci, x, pr, ps; expression=Val{false}, linenumbers=false)
     if ( l == 0 || q == 0 )
         # Workaround for wee bug in Symbolics when trying to compile empty matrix
         # it produces keech. So we hand it an empty vector instead.
         F_fn = build_function(Vector{Num}([]), x, pr, ps; expression=Val{false}, linenumbers=false)
     else
-        F_fn = build_function(defnnum.F, x, pr, ps; expression=Val{false}, linenumbers=false)
+        F_fn = build_function(defn.F, x, pr, ps; expression=Val{false}, linenumbers=false)
     end
     Fq_fn = build_function(Fq, x, pr, ps; expression=Val{false}, linenumbers=false)
 
     # Indexed functions (need to separate std from mutating versions with [1] and [2])
     ce_i_fn = Vector{Tuple{Function, Function}}(undef, me)
     for lp_ce=1:me
-        ce_i_fn[lp_ce] = build_function([ defnnum.ce[lp_ce] ], x, pr, ps; expression=Val{false}, linenumbers=false)
+        ce_i_fn[lp_ce] = build_function([ defn.ce[lp_ce] ], x, pr, ps; expression=Val{false}, linenumbers=false)
     end
     ce_i_fn_std = [ ce_i_fn[lp_ce][1] for lp_ce=1:me ]
     ce_i_fn_mut = [ ce_i_fn[lp_ce][2] for lp_ce=1:me ]
 
     ci_i_fn = Vector{Tuple{Function, Function}}(undef, mi)
     for lp_ci=1:mi
-        ci_i_fn[lp_ci] = build_function([ defnnum.ci[lp_ci] ], x, pr, ps; expression=Val{false}, linenumbers=false)
+        ci_i_fn[lp_ci] = build_function([ defn.ci[lp_ci] ], x, pr, ps; expression=Val{false}, linenumbers=false)
     end
     ci_i_fn_std = [ ci_i_fn[lp_ci][1] for lp_ci=1:mi ]
     ci_i_fn_mut = [ ci_i_fn[lp_ci][2] for lp_ci=1:mi ]
@@ -64,7 +77,7 @@ function mpccmodel_build_fn_from_defn(dimspec::MPCCDimSpec, defnnum::MPCCDefinit
     F_i_fn = Matrix{Tuple{Function, Function}}(undef, l, q)
     for lp_q=1:q
         for lp_l=1:l
-            F_i_fn[lp_l, lp_q] = build_function([ defnnum.F[lp_l, lp_q] ], x, pr, ps; expression=Val{false}, linenumbers=false)
+            F_i_fn[lp_l, lp_q] = build_function([ defn.F[lp_l, lp_q] ], x, pr, ps; expression=Val{false}, linenumbers=false)
         end
     end
     F_i_fn_std = [ F_i_fn[lp_l, lp_q][1] for lp_l=1:l, lp_q=1:q ]
@@ -130,13 +143,51 @@ end
 
 
 
+function mpccmodel_construct_config(
+        dimspec::MPCCDimSpec,
+        defn::MPCCDefinition;
+        pdefns::Opt{Vector{MPCCParameterisationDefn}} = missing,
+        testvectors::Vector{MPCCModelTestVector} = Vector{MPCCModelTestVector}(undef, 0),
+        knownsols::Vector = Vector(undef, 0) )
+
+    @assert ( pdefns isa Vector{MPCCParameterisationDefn} ) || ismissing(pdefns) "pdefns must be either missing or vector of MPCCParameterisationDefn"
+    @assert testvectors isa Vector{MPCCModelTestVector} "testvectors must be, possibly empty, vector of MPCCModelTestVector"
+    @assert knownsols isa Vector "knownsols should be a, possibly empty, vector"
+
+    @variables x[1:dimspec.n] pr[1:dimspec.r] ps[1:dimspec.s] t
+
+    # Build callable functions for the basic definition: f, ce, ci, F
+    fns = mpccmodel_build_fn_from_defn(dimspec, defn, x, pr, ps)
+
+    # Build parameterisations
+    if ismissing(pdefns)
+        parameterisations = missing
+    else
+        parameterisations = mpccmodel_build_parameterisation(pdefns, t)
+    end
+
+    return MPCCModelConfig(
+        Symbolics.scalarize(x), Symbolics.scalarize(pr), Symbolics.scalarize(ps),
+        dimspec,
+        defn,
+        fns,
+        parameterisations,
+        testvectors,
+        knownsols
+    )
+end
+
+
+
+
+
 
 function mpccmodel_load_defn_from_file(model_id::String)
 
     # TODO some sanity checking on model_id
 
     # Filename of the model we want to import, include() it
-    src_filename = joinpath(@__DIR__, "models", "model_spec_$(model_id).jl")
+    src_filename = joinpath(@__DIR__, "models_deprecated", "model_spec_$(model_id).jl")
     println("Loading model_spec_$(model_id).jl")
     include(src_filename)
 
@@ -144,20 +195,19 @@ function mpccmodel_load_defn_from_file(model_id::String)
     # Need to setup these function variables from strings then we'll later use invokelatest
     src_fn_dimspec = "mm_spec_" * model_id * "_dimspec"
     src_fn_defn = "mm_spec_" * model_id * "_defn"
-    # src_fn_nzmask = "mm_spec_" * model_id * "_nzmask"
     src_fn_testvectors = "mm_spec_" * model_id * "_testvectors"
     src_fn_knownsols = "mm_spec_" * model_id * "_knownsols"
     src_fn_param_defns = "mm_spec_" * model_id * "_parameterisations"
     fn_dimspec = getfield(@__MODULE__, Symbol(src_fn_dimspec))
     fn_defn = getfield(@__MODULE__, Symbol(src_fn_defn))
-    # fn_nzmask = getfield(@__MODULE__, Symbol(src_fn_nzmask))
     fn_testvectors = getfield(@__MODULE__, Symbol(src_fn_testvectors))
     fn_knownsols = getfield(@__MODULE__, Symbol(src_fn_knownsols))
     fn_param_defns = getfield(@__MODULE__, Symbol(src_fn_param_defns))
 
     # We're getting the dimspec and setting up Symbolics.jl variables
     dimspec = Base.invokelatest(fn_dimspec)
-    @variables x[1:dimspec.n] pr[1:dimspec.r] ps[1:dimspec.s] t
+    # @variables x[1:dimspec.n] pr[1:dimspec.r] ps[1:dimspec.s] t
+    (x, pr, ps) = mpccmodel_build_sym_nums(dimspec)
     
     # Grab the model definition, expressed in Symbolics.jl Num
     defn = Base.invokelatest(fn_defn, x, pr, ps)
@@ -165,7 +215,7 @@ function mpccmodel_load_defn_from_file(model_id::String)
     # Grab the param definitions    
     param_defns = Base.invokelatest(fn_param_defns, t)
 
-    # Build callable functions for the basic model: f, ce, ci, F
+    # Build callable functions for the basic definition: f, ce, ci, F
     fns = mpccmodel_build_fn_from_defn(dimspec, defn, x, pr, ps)
 
     # Build parameterisations
@@ -180,10 +230,9 @@ function mpccmodel_load_defn_from_file(model_id::String)
         dimspec,
         defn,
         fns,
-        # nzmask,
+        parameterisations,
         testvectors,
-        knownsols,
-        parameterisations
+        knownsols
     )
 end
 

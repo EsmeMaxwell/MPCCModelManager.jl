@@ -421,7 +421,7 @@ version = "2.2.2"
 
 [[MPCCModelManager]]
 deps = ["BenchmarkTools", "ForwardDiff", "JSON", "LinearAlgebra", "Revise", "RuntimeGeneratedFunctions", "SparseArrays", "SymbolicUtils", "Symbolics", "UnPack"]
-git-tree-sha1 = "25d36a2ec41177986ba92c3af669eec172bb9d4d"
+git-tree-sha1 = "da4a26670b5cf36d0d5a5393625070a0fcb60358"
 repo-rev = "master"
 repo-url = "G:\\My Drive\\research\\mpcc\\julia\\MPCCModelManager"
 uuid = "37930e1d-5501-4f00-9319-9ec29670b665"
