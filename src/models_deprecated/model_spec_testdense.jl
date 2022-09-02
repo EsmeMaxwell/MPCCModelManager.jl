@@ -98,35 +98,35 @@ function mm_spec_testdense_testvectors()
     gradf_chk_eval[5] = 9400659849/5940688 - (133837*exp(-16342/195))/49000
 
     # ce:
-    gradce_chk_eval = Matrix{Float64}(undef, 5, 2)
-    gradce_chk_eval[1, 1] = (4918*cos(23/10)*sin(1/7))/195
-    gradce_chk_eval[1, 2] = 14641/2100
-    gradce_chk_eval[2, 1] = (4918*cos(23/10)*sin(1/7))/195
-    gradce_chk_eval[2, 2] = 14641/2100
-    gradce_chk_eval[3, 1] = (4918*cos(23/10)*sin(1/7))/195
-    gradce_chk_eval[3, 2] = 5129/130
-    gradce_chk_eval[4, 1] = (4918*cos(23/10)*sin(1/7))/195
-    gradce_chk_eval[4, 2] = 5129/130
-    gradce_chk_eval[5, 1] = (4918*cos(23/10)*sin(1/7))/195
-    gradce_chk_eval[5, 2] = 5129/130
+    jacce_chk_eval = Matrix{Float64}(undef, 5, 2)
+    jacce_chk_eval[1, 1] = (4918*cos(23/10)*sin(1/7))/195
+    jacce_chk_eval[1, 2] = 14641/2100
+    jacce_chk_eval[2, 1] = (4918*cos(23/10)*sin(1/7))/195
+    jacce_chk_eval[2, 2] = 14641/2100
+    jacce_chk_eval[3, 1] = (4918*cos(23/10)*sin(1/7))/195
+    jacce_chk_eval[3, 2] = 5129/130
+    jacce_chk_eval[4, 1] = (4918*cos(23/10)*sin(1/7))/195
+    jacce_chk_eval[4, 2] = 5129/130
+    jacce_chk_eval[5, 1] = (4918*cos(23/10)*sin(1/7))/195
+    jacce_chk_eval[5, 2] = 5129/130
 
-    # gradci:
-    gradci_chk_eval = Matrix{Float64}(undef, 5, 3)
-    gradci_chk_eval[1, 1] = 1
-    gradci_chk_eval[1, 2] = 0
-    gradci_chk_eval[1, 3] = 2029289/5096
-    gradci_chk_eval[2, 1] = 29241/4900
-    gradci_chk_eval[2, 2] = 0
-    gradci_chk_eval[2, 3] = -2029289/5096
-    gradci_chk_eval[3, 1] = 0
-    gradci_chk_eval[3, 2] = 1
-    gradci_chk_eval[3, 3] = -934841/5880
-    gradci_chk_eval[4, 1] = 0
-    gradci_chk_eval[4, 2] = 22801/980
-    gradci_chk_eval[4, 3] = 934841/5880
-    gradci_chk_eval[5, 1] = 0
-    gradci_chk_eval[5, 2] = 22801/63700
-    gradci_chk_eval[5, 3] = -83200849/382200
+    # jacci:
+    jacci_chk_eval = Matrix{Float64}(undef, 5, 3)
+    jacci_chk_eval[1, 1] = 1
+    jacci_chk_eval[1, 2] = 0
+    jacci_chk_eval[1, 3] = 2029289/5096
+    jacci_chk_eval[2, 1] = 29241/4900
+    jacci_chk_eval[2, 2] = 0
+    jacci_chk_eval[2, 3] = -2029289/5096
+    jacci_chk_eval[3, 1] = 0
+    jacci_chk_eval[3, 2] = 1
+    jacci_chk_eval[3, 3] = -934841/5880
+    jacci_chk_eval[4, 1] = 0
+    jacci_chk_eval[4, 2] = 22801/980
+    jacci_chk_eval[4, 3] = 934841/5880
+    jacci_chk_eval[5, 1] = 0
+    jacci_chk_eval[5, 2] = 22801/63700
+    jacci_chk_eval[5, 3] = -83200849/382200
 
     # gradF:
     gradF_chk_eval = Matrix{Vector{Float64}}(undef, 3, 2)
@@ -553,65 +553,65 @@ function mm_spec_testdense_testvectors()
     gradfdp_chk_eval[2][4] = 16034263875/228488 - (1587*exp(-16342/195))/700
     gradfdp_chk_eval[2][5] = 1924111665/1485172 - (17457*exp(-16342/195))/4900
 
-    # gradcedp:
-    gradcedp_chk_eval = Vector{Matrix{Float64}}(undef, 2)
-    gradcedp_chk_eval[1] = Matrix{Float64}(undef, 5, 2)
-    gradcedp_chk_eval[1][1, 1] = (4918*cos(1/7)*cos(23/10))/195
-    gradcedp_chk_eval[1][1, 2] = 14641/300
-    gradcedp_chk_eval[1][2, 1] = (4918*cos(1/7)*cos(23/10))/195
-    gradcedp_chk_eval[1][2, 2] = 14641/300
-    gradcedp_chk_eval[1][3, 1] = (4918*cos(1/7)*cos(23/10))/195
-    gradcedp_chk_eval[1][3, 2] = 0
-    gradcedp_chk_eval[1][4, 1] = (4918*cos(1/7)*cos(23/10))/195
-    gradcedp_chk_eval[1][4, 2] = 0
-    gradcedp_chk_eval[1][5, 1] = (4918*cos(1/7)*cos(23/10))/195
-    gradcedp_chk_eval[1][5, 2] = 0
-    gradcedp_chk_eval[2] = Matrix{Float64}(undef, 5, 2)
-    gradcedp_chk_eval[2][1, 1] = -(4918*sin(1/7)*sin(23/10))/195
-    gradcedp_chk_eval[2][1, 2] = 0
-    gradcedp_chk_eval[2][2, 1] = -(4918*sin(1/7)*sin(23/10))/195
-    gradcedp_chk_eval[2][2, 2] = 0
-    gradcedp_chk_eval[2][3, 1] = -(4918*sin(1/7)*sin(23/10))/195
-    gradcedp_chk_eval[2][3, 2] = 223/13
-    gradcedp_chk_eval[2][4, 1] = -(4918*sin(1/7)*sin(23/10))/195
-    gradcedp_chk_eval[2][4, 2] = 223/13
-    gradcedp_chk_eval[2][5, 1] = -(4918*sin(1/7)*sin(23/10))/195
-    gradcedp_chk_eval[2][5, 2] = 223/13
+    # jaccedp:
+    jaccedp_chk_eval = Vector{Matrix{Float64}}(undef, 2)
+    jaccedp_chk_eval[1] = Matrix{Float64}(undef, 5, 2)
+    jaccedp_chk_eval[1][1, 1] = (4918*cos(1/7)*cos(23/10))/195
+    jaccedp_chk_eval[1][1, 2] = 14641/300
+    jaccedp_chk_eval[1][2, 1] = (4918*cos(1/7)*cos(23/10))/195
+    jaccedp_chk_eval[1][2, 2] = 14641/300
+    jaccedp_chk_eval[1][3, 1] = (4918*cos(1/7)*cos(23/10))/195
+    jaccedp_chk_eval[1][3, 2] = 0
+    jaccedp_chk_eval[1][4, 1] = (4918*cos(1/7)*cos(23/10))/195
+    jaccedp_chk_eval[1][4, 2] = 0
+    jaccedp_chk_eval[1][5, 1] = (4918*cos(1/7)*cos(23/10))/195
+    jaccedp_chk_eval[1][5, 2] = 0
+    jaccedp_chk_eval[2] = Matrix{Float64}(undef, 5, 2)
+    jaccedp_chk_eval[2][1, 1] = -(4918*sin(1/7)*sin(23/10))/195
+    jaccedp_chk_eval[2][1, 2] = 0
+    jaccedp_chk_eval[2][2, 1] = -(4918*sin(1/7)*sin(23/10))/195
+    jaccedp_chk_eval[2][2, 2] = 0
+    jaccedp_chk_eval[2][3, 1] = -(4918*sin(1/7)*sin(23/10))/195
+    jaccedp_chk_eval[2][3, 2] = 223/13
+    jaccedp_chk_eval[2][4, 1] = -(4918*sin(1/7)*sin(23/10))/195
+    jaccedp_chk_eval[2][4, 2] = 223/13
+    jaccedp_chk_eval[2][5, 1] = -(4918*sin(1/7)*sin(23/10))/195
+    jaccedp_chk_eval[2][5, 2] = 223/13
 
-    # gradcidp:
-    gradcidp_chk_eval = Vector{Matrix{Float64}}(undef, 2)
-    gradcidp_chk_eval[1] = Matrix{Float64}(undef, 5, 3)
-    gradcidp_chk_eval[1][1, 1] = 0
-    gradcidp_chk_eval[1][1, 2] = 0
-    gradcidp_chk_eval[1][1, 3] = -67195/182
-    gradcidp_chk_eval[1][2, 1] = 171/35
-    gradcidp_chk_eval[1][2, 2] = 0
-    gradcidp_chk_eval[1][2, 3] = 67195/182
-    gradcidp_chk_eval[1][3, 1] = 0
-    gradcidp_chk_eval[1][3, 2] = 0
-    gradcidp_chk_eval[1][3, 3] = 6191/42
-    gradcidp_chk_eval[1][4, 1] = 0
-    gradcidp_chk_eval[1][4, 2] = -151/7
-    gradcidp_chk_eval[1][4, 3] = -6191/42
-    gradcidp_chk_eval[1][5, 1] = 0
-    gradcidp_chk_eval[1][5, 2] = -151/455
-    gradcidp_chk_eval[1][5, 3] = 550999/2730
-    gradcidp_chk_eval[2] = Matrix{Float64}(undef, 5, 3)
-    gradcidp_chk_eval[2][1, 1] = 0
-    gradcidp_chk_eval[2][1, 2] = 0
-    gradcidp_chk_eval[2][1, 3] = 67195/182
-    gradcidp_chk_eval[2][2, 1] = 171/35
-    gradcidp_chk_eval[2][2, 2] = 0
-    gradcidp_chk_eval[2][2, 3] = -67195/182
-    gradcidp_chk_eval[2][3, 1] = 0
-    gradcidp_chk_eval[2][3, 2] = 0
-    gradcidp_chk_eval[2][3, 3] = -6191/42
-    gradcidp_chk_eval[2][4, 1] = 0
-    gradcidp_chk_eval[2][4, 2] = 151/7
-    gradcidp_chk_eval[2][4, 3] = 6191/42
-    gradcidp_chk_eval[2][5, 1] = 0
-    gradcidp_chk_eval[2][5, 2] = 151/455
-    gradcidp_chk_eval[2][5, 3] = -550999/2730
+    # jaccidp:
+    jaccidp_chk_eval = Vector{Matrix{Float64}}(undef, 2)
+    jaccidp_chk_eval[1] = Matrix{Float64}(undef, 5, 3)
+    jaccidp_chk_eval[1][1, 1] = 0
+    jaccidp_chk_eval[1][1, 2] = 0
+    jaccidp_chk_eval[1][1, 3] = -67195/182
+    jaccidp_chk_eval[1][2, 1] = 171/35
+    jaccidp_chk_eval[1][2, 2] = 0
+    jaccidp_chk_eval[1][2, 3] = 67195/182
+    jaccidp_chk_eval[1][3, 1] = 0
+    jaccidp_chk_eval[1][3, 2] = 0
+    jaccidp_chk_eval[1][3, 3] = 6191/42
+    jaccidp_chk_eval[1][4, 1] = 0
+    jaccidp_chk_eval[1][4, 2] = -151/7
+    jaccidp_chk_eval[1][4, 3] = -6191/42
+    jaccidp_chk_eval[1][5, 1] = 0
+    jaccidp_chk_eval[1][5, 2] = -151/455
+    jaccidp_chk_eval[1][5, 3] = 550999/2730
+    jaccidp_chk_eval[2] = Matrix{Float64}(undef, 5, 3)
+    jaccidp_chk_eval[2][1, 1] = 0
+    jaccidp_chk_eval[2][1, 2] = 0
+    jaccidp_chk_eval[2][1, 3] = 67195/182
+    jaccidp_chk_eval[2][2, 1] = 171/35
+    jaccidp_chk_eval[2][2, 2] = 0
+    jaccidp_chk_eval[2][2, 3] = -67195/182
+    jaccidp_chk_eval[2][3, 1] = 0
+    jaccidp_chk_eval[2][3, 2] = 0
+    jaccidp_chk_eval[2][3, 3] = -6191/42
+    jaccidp_chk_eval[2][4, 1] = 0
+    jaccidp_chk_eval[2][4, 2] = 151/7
+    jaccidp_chk_eval[2][4, 3] = 6191/42
+    jaccidp_chk_eval[2][5, 1] = 0
+    jaccidp_chk_eval[2][5, 2] = 151/455
+    jaccidp_chk_eval[2][5, 3] = -550999/2730
 
     # gradFdp:
     gradFdp_chk_eval = Vector{Matrix{Vector{Float64}}}(undef, 2)
@@ -696,8 +696,8 @@ function mm_spec_testdense_testvectors()
         ci_chk_eval,
         F_chk_eval,
         gradf_chk_eval,
-        gradce_chk_eval,
-        gradci_chk_eval,
+        jacce_chk_eval,
+        jacci_chk_eval,
         gradF_chk_eval,
         hessf_chk_eval,
         hessce_chk_eval,
@@ -708,8 +708,8 @@ function mm_spec_testdense_testvectors()
         cidp_chk_eval,
         Fdp_chk_eval,
         gradfdp_chk_eval,
-        gradcedp_chk_eval,
-        gradcidp_chk_eval,
+        jaccedp_chk_eval,
+        jaccidp_chk_eval,
         gradFdp_chk_eval
     )
 

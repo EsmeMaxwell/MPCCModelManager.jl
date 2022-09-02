@@ -42,8 +42,8 @@ function mpccmodel_setup_symdiff_sparse(config::MPCCModelConfig, Tf::Type)
 
     # grad entries
     gradf_sparse_num = Symbolics.sparsejacobian([ fixup_defn_f_num ], s_x)
-    gradce_sparse_num = Symbolics.sparsejacobian(fixup_defn_ce_num, s_x)
-    gradci_sparse_num = Symbolics.sparsejacobian(fixup_defn_ci_num, s_x)
+    jacce_sparse_num = Symbolics.sparsejacobian(fixup_defn_ce_num, s_x)
+    jacci_sparse_num = Symbolics.sparsejacobian(fixup_defn_ci_num, s_x)
     gradF_sparse_num = Matrix{SparseMatrixCSC}(undef, l, q)
     for lp_q=1:q
         for lp_l=1:l
@@ -52,8 +52,8 @@ function mpccmodel_setup_symdiff_sparse(config::MPCCModelConfig, Tf::Type)
     end
 
     sparsity_gradf = Symbolics.jacobian_sparsity([ fixup_defn_f_num ], s_x)
-    sparsity_gradce = Symbolics.jacobian_sparsity(fixup_defn_ce_num, s_x)
-    sparsity_gradci = Symbolics.jacobian_sparsity(fixup_defn_ci_num, s_x)
+    sparsity_jacce = Symbolics.jacobian_sparsity(fixup_defn_ce_num, s_x)
+    sparsity_jacci = Symbolics.jacobian_sparsity(fixup_defn_ci_num, s_x)
     sparsity_gradF = Matrix{SparseMatrixCSC}(undef, l, q)
     for lp_q=1:q
         for lp_l=1:l
@@ -62,12 +62,12 @@ function mpccmodel_setup_symdiff_sparse(config::MPCCModelConfig, Tf::Type)
     end
 
     println("gradf: ", gradf_sparse_num)
-    println("gradce: ", gradce_sparse_num)
-    println("gradci: ", gradci_sparse_num)
+    println("jacce: ", jacce_sparse_num)
+    println("jacci: ", jacci_sparse_num)
     println("gradF: ", gradF_sparse_num)
     println("sparsity_gradf: ", sparsity_gradf)
-    println("sparsity_gradce: ", sparsity_gradce)
-    println("sparsity_gradci: ", sparsity_gradci)
+    println("sparsity_jacce: ", sparsity_jacce)
+    println("sparsity_jacci: ", sparsity_jacci)
     println("sparsity_gradF: ", sparsity_gradF)
     println("")
 
@@ -155,17 +155,17 @@ function mpccmodel_setup_symdiff_sparse(config::MPCCModelConfig, Tf::Type)
         gradfdp_sparse_num[lp_r] = Symbolics.sparsejacobian([fdp_sparse_num[lp_r]], s_x)
         sparsity_gradfdp[lp_r] = Symbolics.jacobian_sparsity([fdp_sparse_num[lp_r]], s_x)
     end
-    gradcedp_sparse_num = Vector{SparseMatrixCSC}(undef, r)
-    sparsity_gradcedp = Vector{SparseMatrixCSC}(undef, r)
+    jaccedp_sparse_num = Vector{SparseMatrixCSC}(undef, r)
+    sparsity_jaccedp = Vector{SparseMatrixCSC}(undef, r)
     for lp_r=1:r
-        gradcedp_sparse_num[lp_r] = Symbolics.sparsejacobian( cedp_sparse_num[lp_r], s_x )
-        sparsity_gradcedp[lp_r] = Symbolics.jacobian_sparsity( cedp_sparse_num[lp_r], s_x )
+        jaccedp_sparse_num[lp_r] = Symbolics.sparsejacobian( cedp_sparse_num[lp_r], s_x )
+        sparsity_jaccedp[lp_r] = Symbolics.jacobian_sparsity( cedp_sparse_num[lp_r], s_x )
     end
-    gradcidp_sparse_num = Vector{SparseMatrixCSC}(undef, r)
-    sparsity_gradcidp = Vector{SparseMatrixCSC}(undef, r)
+    jaccidp_sparse_num = Vector{SparseMatrixCSC}(undef, r)
+    sparsity_jaccidp = Vector{SparseMatrixCSC}(undef, r)
     for lp_r=1:r
-        gradcidp_sparse_num[lp_r] = Symbolics.sparsejacobian( cidp_sparse_num[lp_r], s_x )
-        sparsity_gradcidp[lp_r] = Symbolics.jacobian_sparsity( cidp_sparse_num[lp_r], s_x )
+        jaccidp_sparse_num[lp_r] = Symbolics.sparsejacobian( cidp_sparse_num[lp_r], s_x )
+        sparsity_jaccidp[lp_r] = Symbolics.jacobian_sparsity( cidp_sparse_num[lp_r], s_x )
     end
     gradFdp_sparse_num = Vector{Matrix{SparseMatrixCSC}}(undef, r)
     sparsity_gradFdp = Vector{Matrix{SparseMatrixCSC}}(undef, r)
@@ -181,18 +181,18 @@ function mpccmodel_setup_symdiff_sparse(config::MPCCModelConfig, Tf::Type)
     end
 
     println("gradfdp: ", gradfdp_sparse_num)
-    println("gradcedp: ", gradcedp_sparse_num)
-    println("gradcidp: ", gradcidp_sparse_num)
+    println("jaccedp: ", jaccedp_sparse_num)
+    println("jaccidp: ", jaccidp_sparse_num)
     println("gradFdp: ", gradFdp_sparse_num)
     println("sparsity_gradfdp: ", sparsity_gradfdp)
-    println("sparsity_gradcedp: ", sparsity_gradcedp)
-    println("sparsity_gradcidp: ", sparsity_gradcidp)
+    println("sparsity_jaccedp: ", sparsity_jaccedp)
+    println("sparsity_jaccidp: ", sparsity_jaccidp)
     println("sparsity_gradFdp: ", sparsity_gradFdp)
 
     # Compiled versions
     gradf_sparse_fn = build_function(gradf_sparse_num, s_x, s_pr, s_ps; expression=Val{false}, linenumbers=false)
-    gradce_sparse_fn = build_function(gradce_sparse_num, s_x, s_pr, s_ps; expression=Val{false}, linenumbers=false)
-    gradci_sparse_fn = build_function(gradci_sparse_num, s_x, s_pr, s_ps; expression=Val{false}, linenumbers=false)
+    jacce_sparse_fn = build_function(jacce_sparse_num, s_x, s_pr, s_ps; expression=Val{false}, linenumbers=false)
+    jacci_sparse_fn = build_function(jacci_sparse_num, s_x, s_pr, s_ps; expression=Val{false}, linenumbers=false)
     gradF_sparse_fn = [ build_function(gradF_sparse_num[lp_l, lp_q], s_x, s_pr, s_ps; expression=Val{false}, linenumbers=false) for lp_l=1:l, lp_q=1:q ]
     # gradF_sparse_fn = Matrix(undef, l, q)       # TODO specify type here    
     # for lp_q=1:q
@@ -212,9 +212,9 @@ function mpccmodel_setup_symdiff_sparse(config::MPCCModelConfig, Tf::Type)
     Fdp_sparse_fn= [ build_function(Fdp_sparse_num[lp_r], s_x, s_pr, s_ps; expression=Val{false}, linenumbers=false) for lp_r=1:r ]
 
     gradfdp_sparse_fn = [ build_function(gradfdp_sparse_num[lp_r], s_x, s_pr, s_ps; expression=Val{false}, linenumbers=false) for lp_r=1:r ]
-    gradcedp_sparse_fn = [ build_function(gradcedp_sparse_num[lp_r], s_x, s_pr, s_ps; expression=Val{false}, linenumbers=false) for lp_r=1:r ]
-    gradcidp_sparse_fn = [ build_function(gradcidp_sparse_num[lp_r], s_x, s_pr, s_ps; expression=Val{false}, linenumbers=false) for lp_r=1:r ]
-    gradFdp_sparse_fn = [ [ build_function(gradcidp_sparse_num[lp_r][lp_l, lp_q], s_x, s_pr, s_ps; expression=Val{false}, linenumbers=false) for lp_l=1:l, lp_q=1:q ] for lp_r=1:r ]
+    jaccedp_sparse_fn = [ build_function(jaccedp_sparse_num[lp_r], s_x, s_pr, s_ps; expression=Val{false}, linenumbers=false) for lp_r=1:r ]
+    jaccidp_sparse_fn = [ build_function(jaccidp_sparse_num[lp_r], s_x, s_pr, s_ps; expression=Val{false}, linenumbers=false) for lp_r=1:r ]
+    gradFdp_sparse_fn = [ [ build_function(jaccidp_sparse_num[lp_r][lp_l, lp_q], s_x, s_pr, s_ps; expression=Val{false}, linenumbers=false) for lp_l=1:l, lp_q=1:q ] for lp_r=1:r ]
 
     # f, ce, ci, F all return usual dense vectors/matrices because they are, well, dense.
 
@@ -255,15 +255,15 @@ function mpccmodel_setup_symdiff_sparse(config::MPCCModelConfig, Tf::Type)
     end
 
 
-    # gradce functions
-    function local_gradce(x::Vector{S}, pr::Vector{T}, ps::Vector{Int64}) where {S <: Real, T <: Real}
-        return gradce_sparse_fn[1](x, pr, ps)
+    # jacce functions
+    function local_jacce(x::Vector{S}, pr::Vector{T}, ps::Vector{Int64}) where {S <: Real, T <: Real}
+        return jacce_sparse_fn[1](x, pr, ps)
     end
 
 
-    # gradci functions
-    function local_gradci(x::Vector{S}, pr::Vector{T}, ps::Vector{Int64}) where {S <: Real, T <: Real}
-        return gradci_sparse_fn[1](x, pr, ps)
+    # jacci functions
+    function local_jacci(x::Vector{S}, pr::Vector{T}, ps::Vector{Int64}) where {S <: Real, T <: Real}
+        return jacci_sparse_fn[1](x, pr, ps)
     end
     
 
@@ -327,15 +327,15 @@ function mpccmodel_setup_symdiff_sparse(config::MPCCModelConfig, Tf::Type)
     end
 
 
-    # gradcedp functions
-    function local_gradcedp(x::Vector{S}, pr::Vector{T}, ps::Vector{Int64}) where {S <: Real, T <: Real}
-        return mm_sym_sp_gradcedp(dimspec, gradcedp_sparse_fn, x, pr, ps)
+    # jaccedp functions
+    function local_jaccedp(x::Vector{S}, pr::Vector{T}, ps::Vector{Int64}) where {S <: Real, T <: Real}
+        return mm_sym_sp_jaccedp(dimspec, jaccedp_sparse_fn, x, pr, ps)
     end
 
 
-    # gradcedp functions
-    function local_gradcidp(x::Vector{S}, pr::Vector{T}, ps::Vector{Int64}) where {S <: Real, T <: Real}
-        return mm_sym_sp_gradcidp(dimspec, gradcidp_sparse_fn, x, pr, ps)
+    # jaccedp functions
+    function local_jaccidp(x::Vector{S}, pr::Vector{T}, ps::Vector{Int64}) where {S <: Real, T <: Real}
+        return mm_sym_sp_jaccidp(dimspec, jaccidp_sparse_fn, x, pr, ps)
     end
 
 
@@ -347,20 +347,20 @@ function mpccmodel_setup_symdiff_sparse(config::MPCCModelConfig, Tf::Type)
     return MPCCModelSparseSym(
         config,
         sparsity_gradf,
-        sparsity_gradce,
-        sparsity_gradci,
+        sparsity_jacce,
+        sparsity_jacci,
         sparsity_gradF,
         sparsity_hessf,
         sparsity_hessce,
         sparsity_hessci,
         sparsity_hessF,
         sparsity_gradfdp,
-        sparsity_gradcedp,
-        sparsity_gradcidp,
+        sparsity_jaccedp,
+        sparsity_jaccidp,
         sparsity_gradFdp,
         gradf_sparse_num,
-        gradce_sparse_num,
-        gradci_sparse_num,
+        jacce_sparse_num,
+        jacci_sparse_num,
         gradF_sparse_num,
         hessf_sparse_num,
         hessce_sparse_num,
@@ -371,16 +371,16 @@ function mpccmodel_setup_symdiff_sparse(config::MPCCModelConfig, Tf::Type)
         cidp_sparse_num,
         Fdp_sparse_num,
         gradfdp_sparse_num,
-        gradcedp_sparse_num,
-        gradcidp_sparse_num,
+        jaccedp_sparse_num,
+        jaccidp_sparse_num,
         gradFdp_sparse_num,
         local_f, missing,
         local_ce, missing,
         local_ci, missing,
         local_F, missing,
         local_gradf, missing,
-        local_gradce, missing,
-        local_gradci, missing,
+        local_jacce, missing,
+        local_jacci, missing,
         local_gradF, missing,
         local_hessf, missing,
         local_hessce, missing,
@@ -391,8 +391,8 @@ function mpccmodel_setup_symdiff_sparse(config::MPCCModelConfig, Tf::Type)
         local_cidp, missing,
         local_Fdp, missing,
         local_gradfdp, missing,
-        local_gradcedp, missing,
-        local_gradcidp, missing,
+        local_jaccedp, missing,
+        local_jaccidp, missing,
         local_gradFdp, missing
 
     )
@@ -486,17 +486,17 @@ function mm_sym_sp_gradfdp(dimspec::MPCCDimSpec, fn_gradfdp::AbstractVector, x::
 end
 
 
-function mm_sym_sp_gradcedp(dimspec::MPCCDimSpec, fn_gradcedp::AbstractVector, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
+function mm_sym_sp_jaccedp(dimspec::MPCCDimSpec, fn_jaccedp::AbstractVector, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
     @unpack r = dimspec
-    gradcedp = [ fn_gradcedp[lp_r][1](x, pr, ps) for lp_r in 1:r ]
-    return gradcedp
+    jaccedp = [ fn_jaccedp[lp_r][1](x, pr, ps) for lp_r in 1:r ]
+    return jaccedp
 end
 
 
-function mm_sym_sp_gradcidp(dimspec::MPCCDimSpec, fn_gradcidp::AbstractVector, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
+function mm_sym_sp_jaccidp(dimspec::MPCCDimSpec, fn_jaccidp::AbstractVector, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
     @unpack r = dimspec
-    gradcidp = [ fn_gradcidp[lp_r][1](x, pr, ps) for lp_r in 1:r ]
-    return gradcidp
+    jaccidp = [ fn_jaccidp[lp_r][1](x, pr, ps) for lp_r in 1:r ]
+    return jaccidp
 end
 
 
@@ -511,13 +511,13 @@ end
 # for lp_r=1:r
 #     gradfdp_sparse_num[lp_r] = Symbolics.sparsejacobian([fdp_sparse_num[lp_r]], s_x)
 # end
-# gradcedp_sparse_num = Vector{SparseMatrixCSC}(undef, r)
+# jaccedp_sparse_num = Vector{SparseMatrixCSC}(undef, r)
 # for lp_r=1:r
-#     gradcedp_sparse_num[lp_r] = Symbolics.sparsejacobian( cedp_sparse_num[lp_r], s_x )
+#     jaccedp_sparse_num[lp_r] = Symbolics.sparsejacobian( cedp_sparse_num[lp_r], s_x )
 # end
-# gradcidp_sparse_num = Vector{SparseMatrixCSC}(undef, r)
+# jaccidp_sparse_num = Vector{SparseMatrixCSC}(undef, r)
 # for lp_r=1:r
-#     gradcidp_sparse_num[lp_r] = Symbolics.sparsejacobian( cidp_sparse_num[lp_r], s_x )
+#     jaccidp_sparse_num[lp_r] = Symbolics.sparsejacobian( cidp_sparse_num[lp_r], s_x )
 # end
 # gradFdp_sparse_num = Vector{Matrix{SparseMatrixCSC}}(undef, r)
 # for lp_r=1:r

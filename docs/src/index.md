@@ -56,8 +56,8 @@ This returns a struct which includes the model configuration, and also the follo
 * `F,` `F!`: Comlementarity constraints (matrix).
 * `Fq`, `Fq!`: Product of complementarity contraints (vector), for penalty method.
 * `gradf`, `gradf!`: Row vector gradient of `f` (vector).
-* `gradce`, `gradce!`: Jacobian of `ce`, (`me` by `n` matrix).
-* `gradci`, `gradci!`: Jacobian of `ci`, (`mi` by `n` matrix).
+* `jacce`, `jacce!`: Jacobian of `ce`, (`me` by `n` matrix).
+* `jacci`, `jacci!`: Jacobian of `ci`, (`mi` by `n` matrix).
 * `gradF`, `gradF!`:  Gradients of `F`, (`l` by `q` matrix of length `n` vectors).
 * `gradFq`, `gradFq!`: 
 * `hessf`, `hessf!`: Hessian of `f`.
@@ -70,8 +70,8 @@ This returns a struct which includes the model configuration, and also the follo
 * `cidp`, `cidp!`: Gradient of `ci` wrt `pr` (vector of length `r` of vector of length `mi`)
 * `Fdp`, `Fdp!`: Gradient of `F` wrt `pr` (vector of length `r` of matrix of size `l` by `q`)
 * `gradfdp`, `gradfdp!`: Gradient wrt `pr` of gradient wrt `x` (vector of length `r` of vector of length `n`)
-* `gradcedp`, `gradcedp!`: Gradient wrt `pr` of Jacobian of `ce` (vector of length `r` of matrix of size `me` by `n`)
-* `gradcidp`, `gradcidp!`: Gradient wrt `pr` of Jacobian of `ci` (vector of length `r` of matrix of size `mi` by `n`)
+* `jaccedp`, `jaccedp!`: Gradient wrt `pr` of Jacobian of `ce` (vector of length `r` of matrix of size `me` by `n`)
+* `jaccidp`, `jaccidp!`: Gradient wrt `pr` of Jacobian of `ci` (vector of length `r` of matrix of size `mi` by `n`)
 * `gradFdp`, `gradFdp!`: Gradient wrt `pr` of spatial gradients of `F` (vector of length `r` or matrix of size `l` by `q` of vector of length `n`)
 
 

@@ -97,35 +97,35 @@ function mm_spec_testsparse_testvectors()
     gradf_chk_eval[5] = -(133837*exp(-722/13))/1000
 
     # ce:
-    gradce_chk_eval = Matrix{Float64}(undef, 5, 2)
-    gradce_chk_eval[1, 1] = (8*sin(1/49))/3
-    gradce_chk_eval[1, 2] = 0
-    gradce_chk_eval[2, 1] = 0
-    gradce_chk_eval[2, 2] = 0
-    gradce_chk_eval[3, 1] = 0
-    gradce_chk_eval[3, 2] = 1/7
-    gradce_chk_eval[4, 1] = 0
-    gradce_chk_eval[4, 2] = 23/65
-    gradce_chk_eval[5, 1] = 0
-    gradce_chk_eval[5, 2] = 1/7
+    jacce_chk_eval = Matrix{Float64}(undef, 5, 2)
+    jacce_chk_eval[1, 1] = (8*sin(1/49))/3
+    jacce_chk_eval[1, 2] = 0
+    jacce_chk_eval[2, 1] = 0
+    jacce_chk_eval[2, 2] = 0
+    jacce_chk_eval[3, 1] = 0
+    jacce_chk_eval[3, 2] = 1/7
+    jacce_chk_eval[4, 1] = 0
+    jacce_chk_eval[4, 2] = 23/65
+    jacce_chk_eval[5, 1] = 0
+    jacce_chk_eval[5, 2] = 1/7
 
-    # gradci:
-    gradci_chk_eval = Matrix{Float64}(undef, 5, 3)
-    gradci_chk_eval[1, 1] = 1
-    gradci_chk_eval[1, 2] = 0
-    gradci_chk_eval[1, 3] = 67195/364
-    gradci_chk_eval[2, 1] = 171/70
-    gradci_chk_eval[2, 2] = 0
-    gradci_chk_eval[2, 3] = -67195/364
-    gradci_chk_eval[3, 1] = 0
-    gradci_chk_eval[3, 2] = 1
-    gradci_chk_eval[3, 3] = -6191/84
-    gradci_chk_eval[4, 1] = 0
-    gradci_chk_eval[4, 2] = 22801/4900
-    gradci_chk_eval[4, 3] = 6191/84
-    gradci_chk_eval[5, 1] = 0
-    gradci_chk_eval[5, 2] = 0
-    gradci_chk_eval[5, 3] = -550999/5460
+    # jacci:
+    jacci_chk_eval = Matrix{Float64}(undef, 5, 3)
+    jacci_chk_eval[1, 1] = 1
+    jacci_chk_eval[1, 2] = 0
+    jacci_chk_eval[1, 3] = 67195/364
+    jacci_chk_eval[2, 1] = 171/70
+    jacci_chk_eval[2, 2] = 0
+    jacci_chk_eval[2, 3] = -67195/364
+    jacci_chk_eval[3, 1] = 0
+    jacci_chk_eval[3, 2] = 1
+    jacci_chk_eval[3, 3] = -6191/84
+    jacci_chk_eval[4, 1] = 0
+    jacci_chk_eval[4, 2] = 22801/4900
+    jacci_chk_eval[4, 3] = 6191/84
+    jacci_chk_eval[5, 1] = 0
+    jacci_chk_eval[5, 2] = 0
+    jacci_chk_eval[5, 3] = -550999/5460
 
     # gradF:
     gradF_chk_eval = Matrix{Vector{Float64}}(undef, 3, 2)
@@ -552,65 +552,65 @@ function mm_spec_testsparse_testvectors()
     gradfdp_chk_eval[2][4] = -(11109*exp(-722/13))/100
     gradfdp_chk_eval[2][5] = -(17457*exp(-722/13))/100
 
-    # gradcedp:
-    gradcedp_chk_eval = Vector{Matrix{Float64}}(undef, 2)
-    gradcedp_chk_eval[1] = Matrix{Float64}(undef, 5, 2)
-    gradcedp_chk_eval[1][1, 1] = (16*cos(1/49))/21
-    gradcedp_chk_eval[1][1, 2] = 0
-    gradcedp_chk_eval[1][2, 1] = 0
-    gradcedp_chk_eval[1][2, 2] = 0
-    gradcedp_chk_eval[1][3, 1] = 0
-    gradcedp_chk_eval[1][3, 2] = 1
-    gradcedp_chk_eval[1][4, 1] = 0
-    gradcedp_chk_eval[1][4, 2] = 0
-    gradcedp_chk_eval[1][5, 1] = 0
-    gradcedp_chk_eval[1][5, 2] = 1
-    gradcedp_chk_eval[2] = Matrix{Float64}(undef, 5, 2)
-    gradcedp_chk_eval[2][1, 1] = 0
-    gradcedp_chk_eval[2][1, 2] = 0
-    gradcedp_chk_eval[2][2, 1] = 0
-    gradcedp_chk_eval[2][2, 2] = 0
-    gradcedp_chk_eval[2][3, 1] = 0
-    gradcedp_chk_eval[2][3, 2] = 0
-    gradcedp_chk_eval[2][4, 1] = 0
-    gradcedp_chk_eval[2][4, 2] = 2/13
-    gradcedp_chk_eval[2][5, 1] = 0
-    gradcedp_chk_eval[2][5, 2] = 0
+    # jaccedp:
+    jaccedp_chk_eval = Vector{Matrix{Float64}}(undef, 2)
+    jaccedp_chk_eval[1] = Matrix{Float64}(undef, 5, 2)
+    jaccedp_chk_eval[1][1, 1] = (16*cos(1/49))/21
+    jaccedp_chk_eval[1][1, 2] = 0
+    jaccedp_chk_eval[1][2, 1] = 0
+    jaccedp_chk_eval[1][2, 2] = 0
+    jaccedp_chk_eval[1][3, 1] = 0
+    jaccedp_chk_eval[1][3, 2] = 1
+    jaccedp_chk_eval[1][4, 1] = 0
+    jaccedp_chk_eval[1][4, 2] = 0
+    jaccedp_chk_eval[1][5, 1] = 0
+    jaccedp_chk_eval[1][5, 2] = 1
+    jaccedp_chk_eval[2] = Matrix{Float64}(undef, 5, 2)
+    jaccedp_chk_eval[2][1, 1] = 0
+    jaccedp_chk_eval[2][1, 2] = 0
+    jaccedp_chk_eval[2][2, 1] = 0
+    jaccedp_chk_eval[2][2, 2] = 0
+    jaccedp_chk_eval[2][3, 1] = 0
+    jaccedp_chk_eval[2][3, 2] = 0
+    jaccedp_chk_eval[2][4, 1] = 0
+    jaccedp_chk_eval[2][4, 2] = 2/13
+    jaccedp_chk_eval[2][5, 1] = 0
+    jaccedp_chk_eval[2][5, 2] = 0
 
-    # gradcidp:
-    gradcidp_chk_eval = Vector{Matrix{Float64}}(undef, 2)
-    gradcidp_chk_eval[1] = Matrix{Float64}(undef, 5, 3)
-    gradcidp_chk_eval[1][1, 1] = 0
-    gradcidp_chk_eval[1][1, 2] = 0
-    gradcidp_chk_eval[1][1, 3] = -2225/26
-    gradcidp_chk_eval[1][2, 1] = 1
-    gradcidp_chk_eval[1][2, 2] = 0
-    gradcidp_chk_eval[1][2, 3] = 2225/26
-    gradcidp_chk_eval[1][3, 1] = 0
-    gradcidp_chk_eval[1][3, 2] = 0
-    gradcidp_chk_eval[1][3, 3] = 205/6
-    gradcidp_chk_eval[1][4, 1] = 0
-    gradcidp_chk_eval[1][4, 2] = -151/35
-    gradcidp_chk_eval[1][4, 3] = -205/6
-    gradcidp_chk_eval[1][5, 1] = 0
-    gradcidp_chk_eval[1][5, 2] = 0
-    gradcidp_chk_eval[1][5, 3] = 3649/78
-    gradcidp_chk_eval[2] = Matrix{Float64}(undef, 5, 3)
-    gradcidp_chk_eval[2][1, 1] = 0
-    gradcidp_chk_eval[2][1, 2] = 0
-    gradcidp_chk_eval[2][1, 3] = 2225/26
-    gradcidp_chk_eval[2][2, 1] = 1
-    gradcidp_chk_eval[2][2, 2] = 0
-    gradcidp_chk_eval[2][2, 3] = -2225/26
-    gradcidp_chk_eval[2][3, 1] = 0
-    gradcidp_chk_eval[2][3, 2] = 0
-    gradcidp_chk_eval[2][3, 3] = -205/6
-    gradcidp_chk_eval[2][4, 1] = 0
-    gradcidp_chk_eval[2][4, 2] = 151/35
-    gradcidp_chk_eval[2][4, 3] = 205/6
-    gradcidp_chk_eval[2][5, 1] = 0
-    gradcidp_chk_eval[2][5, 2] = 0
-    gradcidp_chk_eval[2][5, 3] = -3649/78
+    # jaccidp:
+    jaccidp_chk_eval = Vector{Matrix{Float64}}(undef, 2)
+    jaccidp_chk_eval[1] = Matrix{Float64}(undef, 5, 3)
+    jaccidp_chk_eval[1][1, 1] = 0
+    jaccidp_chk_eval[1][1, 2] = 0
+    jaccidp_chk_eval[1][1, 3] = -2225/26
+    jaccidp_chk_eval[1][2, 1] = 1
+    jaccidp_chk_eval[1][2, 2] = 0
+    jaccidp_chk_eval[1][2, 3] = 2225/26
+    jaccidp_chk_eval[1][3, 1] = 0
+    jaccidp_chk_eval[1][3, 2] = 0
+    jaccidp_chk_eval[1][3, 3] = 205/6
+    jaccidp_chk_eval[1][4, 1] = 0
+    jaccidp_chk_eval[1][4, 2] = -151/35
+    jaccidp_chk_eval[1][4, 3] = -205/6
+    jaccidp_chk_eval[1][5, 1] = 0
+    jaccidp_chk_eval[1][5, 2] = 0
+    jaccidp_chk_eval[1][5, 3] = 3649/78
+    jaccidp_chk_eval[2] = Matrix{Float64}(undef, 5, 3)
+    jaccidp_chk_eval[2][1, 1] = 0
+    jaccidp_chk_eval[2][1, 2] = 0
+    jaccidp_chk_eval[2][1, 3] = 2225/26
+    jaccidp_chk_eval[2][2, 1] = 1
+    jaccidp_chk_eval[2][2, 2] = 0
+    jaccidp_chk_eval[2][2, 3] = -2225/26
+    jaccidp_chk_eval[2][3, 1] = 0
+    jaccidp_chk_eval[2][3, 2] = 0
+    jaccidp_chk_eval[2][3, 3] = -205/6
+    jaccidp_chk_eval[2][4, 1] = 0
+    jaccidp_chk_eval[2][4, 2] = 151/35
+    jaccidp_chk_eval[2][4, 3] = 205/6
+    jaccidp_chk_eval[2][5, 1] = 0
+    jaccidp_chk_eval[2][5, 2] = 0
+    jaccidp_chk_eval[2][5, 3] = -3649/78
 
     # gradFdp:
     gradFdp_chk_eval = Vector{Matrix{Vector{Float64}}}(undef, 2)
@@ -696,8 +696,8 @@ function mm_spec_testsparse_testvectors()
         ci_chk_eval,
         F_chk_eval,
         gradf_chk_eval,
-        gradce_chk_eval,
-        gradci_chk_eval,
+        jacce_chk_eval,
+        jacci_chk_eval,
         gradF_chk_eval,
         hessf_chk_eval,
         hessce_chk_eval,
@@ -708,8 +708,8 @@ function mm_spec_testsparse_testvectors()
         cidp_chk_eval,
         Fdp_chk_eval,
         gradfdp_chk_eval,
-        gradcedp_chk_eval,
-        gradcidp_chk_eval,
+        jaccedp_chk_eval,
+        jaccidp_chk_eval,
         gradFdp_chk_eval
     )
 

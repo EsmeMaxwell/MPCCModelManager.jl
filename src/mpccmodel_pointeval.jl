@@ -34,16 +34,16 @@ function mpccmodel_pointeval_basic(model::AbstractMPCCModel, ptevalreq::MPCCPoin
         gradf = missing
     end
 
-    if ( ptevalreq.gradce )
-        gradce = model.gradce(x0, pr0, ps0)
+    if ( ptevalreq.jacce )
+        jacce = model.jacce(x0, pr0, ps0)
     else
-        gradce = missing
+        jacce = missing
     end
 
-    if ( ptevalreq.gradci )
-        gradci = model.gradci(x0, pr0, ps0)
+    if ( ptevalreq.jacci )
+        jacci = model.jacci(x0, pr0, ps0)
     else
-        gradci = missing
+        jacci = missing
     end
 
     if ( ptevalreq.gradF )
@@ -109,16 +109,16 @@ function mpccmodel_pointeval_basic(model::AbstractMPCCModel, ptevalreq::MPCCPoin
         gradfdp = missing
     end
 
-    if ( ptevalreq.gradcedp )
-        gradcedp = model.gradcedp(x0, pr0, ps0)
+    if ( ptevalreq.jaccedp )
+        jaccedp = model.jaccedp(x0, pr0, ps0)
     else
-        gradcedp = missing
+        jaccedp = missing
     end
 
-    if ( ptevalreq.gradcidp )
-        gradcidp = model.gradcidp(x0, pr0, ps0)
+    if ( ptevalreq.jaccidp )
+        jaccidp = model.jaccidp(x0, pr0, ps0)
     else
-        gradcidp = missing
+        jaccidp = missing
     end
 
     if ( ptevalreq.gradFdp )
@@ -129,10 +129,10 @@ function mpccmodel_pointeval_basic(model::AbstractMPCCModel, ptevalreq::MPCCPoin
 
     return MPCCPointEval{promote_type(S, T)}(
         f, ce, ci, F,
-        gradf, gradce, gradci, gradF,
+        gradf, jacce, jacci, gradF,
         hessf, hessce, hessci, hessF,
         fdp, cedp, cidp, Fdp,
-        gradfdp, gradcedp, gradcidp, gradFdp
+        gradfdp, jaccedp, jaccidp, gradFdp
     )
 
 end

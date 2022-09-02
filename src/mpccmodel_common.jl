@@ -3,7 +3,7 @@
 
 # TODO 20220708: maybe change function names gradxx to jacxx
 
-# TODO Change Vector{Num} to either Symbolics.Arr{Num, 1} or something more general. May require some finessing
+# TODO: is it possible to allow calling fns without pr or ps; easier support for static models?
 
 
 export  MPCCDimSpec,
@@ -22,7 +22,9 @@ export  MPCCDimSpec,
         MPCCModelDenseForwardDiff,
         MPCCModelSparseSym,
         MPCCJumpFixedFunctions,
-        MPCCNewtonPenaltyFunctions
+        MPCCNewtonPenaltyFunctions,
+        MPCCActivesetCnstrType,
+        MPCCConstraintSet
 
 # Trick from https://discourse.julialang.org/t/aliases-for-union-t-nothing-and-union-t-missing/15402/15
 const Opt{T} = Union{Missing,T}
@@ -34,15 +36,15 @@ sp_getparamtypes(mtrx::SparseMatrixCSC{TT, SS}) where {TT, SS} = NamedTuple{(:T,
 
 
 """
-MPCCDimSpec
+    MPCCDimSpec
 
 Determines the dimensions of a program.
 
 * n: number of spatial dimensions
 * q: columns in F (number of complementarity contraints)
 * l: row in F (number of expressions in each complementarity contraint)
-* me: numebr of equality constraints
-* me: numebr of inequality constraints
+* me: numeber of equality constraints
+* me: numeber of inequality constraints
 * r: number of continuous parameters
 * s: number of integer parameters
 
@@ -90,7 +92,7 @@ end
 
 
 """
-struct MPCCDefinition
+    MPCCDefinition
 
 Definition of the MPCC/NLP containing Symbolics Num expressions for f, ce, ci,
 and F.
@@ -150,7 +152,7 @@ end
 
 
 """
-MPCCFunctions
+    MPCCFunctions
 
 A MPCCDefinition compiled into functions. This contains both standard and
 mutating functions, and individual elements encoded as a function within a
@@ -180,7 +182,7 @@ end
 
 
 """
-MPCCPointEvalReq
+    MPCCPointEvalReq
 
 When making a request to evaluate several things in one request, this bitmask
 determines what will be evaluated.
@@ -191,8 +193,8 @@ struct MPCCPointEvalReq
     ci::Bool
     F::Bool
     gradf::Bool
-    gradce::Bool
-    gradci::Bool
+    jacce::Bool
+    jacci::Bool
     gradF::Bool
     hessf::Bool
     hessce::Bool
@@ -203,8 +205,8 @@ struct MPCCPointEvalReq
     cidp::Bool
     Fdp::Bool
     gradfdp::Bool
-    gradcedp::Bool
-    gradcidp::Bool
+    jaccedp::Bool
+    jaccidp::Bool
     gradFdp::Bool                           
 end
 function MPCCPointEvalReq()
@@ -220,7 +222,7 @@ end
 
 
 """
-MPCCPointEval
+    MPCCPointEval
 
 Contains results of a point evaluation.
 """
@@ -230,8 +232,8 @@ struct MPCCPointEval{T <: AbstractFloat}
     ci::Opt{Vector{T}}                          # Vector of length mi
     F::Opt{Matrix{T}}                           # Matrix of dim l x q
     gradf::Opt{Vector{T}}                       # Vector of length n
-    gradce::Opt{Matrix{T}}                      # Changed 20211029: now matrix of me by n
-    gradci::Opt{Matrix{T}}                      # Changed 20211029: now matrix of mi by n
+    jacce::Opt{Matrix{T}}                      # Changed 20211029: now matrix of me by n
+    jacci::Opt{Matrix{T}}                      # Changed 20211029: now matrix of mi by n
     gradF::Opt{Matrix{Vector{T}}}               # Matrix of dim l x q of n length vectors (the gradients wrt x)
     hessf::Opt{Matrix{T}}                       # Matrix dim n x n
     hessce::Opt{Vector{Matrix{T}}}              # Vector of length me of 2d Hessian matrices
@@ -242,8 +244,8 @@ struct MPCCPointEval{T <: AbstractFloat}
     cidp::Opt{Vector{Vector{T}}}                # Vector of length r of vectors of length mi
     Fdp::Opt{Vector{Matrix{T}}}                 # Vector of length r of matrix of dim l x q
     gradfdp::Opt{Vector{Vector{T}}}             # Vector of length r of gradients of f/dp (vectors of length n)
-    gradcedp::Opt{Vector{Matrix{T}}}            # Vector of length r of gradce, each /dp
-    gradcidp::Opt{Vector{Matrix{T}}}            # Vector of length r of gradci, each /dp
+    jaccedp::Opt{Vector{Matrix{T}}}            # Vector of length r of jacce, each /dp
+    jaccidp::Opt{Vector{Matrix{T}}}            # Vector of length r of jacci, each /dp
     gradFdp::Opt{Vector{Matrix{Vector{T}}}}     # Vector of length r of gradF, each /dp
 end
 function MPCCPointEval()  # Quick way to create empty/zero struct
@@ -276,8 +278,8 @@ Base.:(==)(x::MPCCPointEval, y::MPCCPointEval) = (
     x.ci == y.ci &&
 	x.F == y.F &&
 	x.gradf == y.gradf &&
-    x.gradce == y.gradce &&
-    x.gradci == y.gradci &&
+    x.jacce == y.jacce &&
+    x.jacci == y.jacci &&
     x.gradF == y.gradF &&
     x.hessf == y.hessf &&
     x.hessce == y.hessce &&
@@ -288,8 +290,8 @@ Base.:(==)(x::MPCCPointEval, y::MPCCPointEval) = (
     x.cidp == y.cidp &&
     x.Fdp == y.Fdp &&
     x.gradfdp == y.gradfdp &&
-    x.gradcedp == y.gradcedp &&
-    x.gradcidp == y.gradcidp &&
+    x.jaccedp == y.jaccedp &&
+    x.jaccidp == y.jaccidp &&
     x.gradFdp == y.gradFdp )
 Base.:(≈)(x::MPCCPointEval, y::MPCCPointEval) = (
     x.f ≈ y.f &&
@@ -297,8 +299,8 @@ Base.:(≈)(x::MPCCPointEval, y::MPCCPointEval) = (
     x.ci ≈ y.ci &&
     x.F ≈ y.F &&
     x.gradf ≈ y.gradf &&
-    x.gradce ≈ y.gradce &&
-    x.gradci ≈ y.gradci &&
+    x.jacce ≈ y.jacce &&
+    x.jacci ≈ y.jacci &&
     x.gradF ≈ y.gradF &&
     x.hessf ≈ y.hessf &&
     x.hessce ≈ y.hessce &&
@@ -309,8 +311,8 @@ Base.:(≈)(x::MPCCPointEval, y::MPCCPointEval) = (
     x.cidp ≈ y.cidp &&
     x.Fdp ≈ y.Fdp &&
     x.gradfdp ≈ y.gradfdp &&
-    x.gradcedp ≈ y.gradcedp &&
-    x.gradcidp ≈ y.gradcidp &&
+    x.jaccedp ≈ y.jaccedp &&
+    x.jaccidp ≈ y.jaccidp &&
     x.gradFdp ≈ y.gradFdp )
 
 
@@ -327,7 +329,7 @@ end
 
 
 """
-MPCCParameterisationDefn
+    MPCCParameterisationDefn
 
 The definition for a parameterisation of a model, i.e. how the `pr` depends on `t`.
 """
@@ -352,7 +354,7 @@ end
 
 
 """
-MPCCParameterisationFunctions
+    MPCCParameterisationFunctions
 
 Compilation of `MPCCParameterisationFunctions` into Julia functions, including derivative.
 """
@@ -365,7 +367,7 @@ end
 
 
 """
-MPCCParameterisations
+    MPCCParameterisations
 
 Collection of Num `t` along with definitions of parameterisations and their
 compilation.
@@ -379,7 +381,7 @@ end
 
 
 """
-MPCCModelConfig
+    MPCCModelConfig
 
 Model config contains the Num variables for `x`, `pr`, `ps` along with the
 `MPCCDimSpec`, definition, compiled definition, any test vectors, any known
@@ -409,10 +411,10 @@ abstract type AbstractMPCCModelSparse <: AbstractMPCCModel end
 
 
 """
-MPCCModelDenseForwardDiff
+    MPCCModelDenseForwardDiff
 
-A `MPCCModelConfig` compiled to produce the derivatives we want.
-This version uses ForwardDiff.jl and produces dense matrices.
+A `MPCCModelConfig` compiled to produce the derivatives we want. This version
+uses ForwardDiff.jl and produces dense matrices.
 """
 struct MPCCModelDenseForwardDiff <: AbstractMPCCModelDense
     config::MPCCModelConfig
@@ -428,10 +430,10 @@ struct MPCCModelDenseForwardDiff <: AbstractMPCCModelDense
     Fq!::Opt{Function}
     gradf::Function
     gradf!::Opt{Function}
-    gradce::Function
-    gradce!::Opt{Function}
-    gradci::Function
-    gradci!::Opt{Function}
+    jacce::Function
+    jacce!::Opt{Function}
+    jacci::Function
+    jacci!::Opt{Function}
     gradF::Function
     gradF!::Opt{Function}
     gradFq::Function
@@ -456,10 +458,10 @@ struct MPCCModelDenseForwardDiff <: AbstractMPCCModelDense
     Fdp!::Opt{Function}
     gradfdp::Function
     gradfdp!::Opt{Function}
-    gradcedp::Function
-    gradcedp!::Opt{Function}
-    gradcidp::Function
-    gradcidp!::Opt{Function}
+    jaccedp::Function
+    jaccedp!::Opt{Function}
+    jaccidp::Function
+    jaccidp!::Opt{Function}
     gradFdp::Function
     gradFdp!::Opt{Function}
 end
@@ -468,8 +470,8 @@ end
 
 
 # gradf::Opt{Vector{T}}                       # Vector of length n
-# gradce::Opt{Matrix{T}}                      # Changed 20211029: now matrix of me by n
-# gradci::Opt{Matrix{T}}                      # Changed 20211029: now matrix of mi by n
+# jacce::Opt{Matrix{T}}                      # Changed 20211029: now matrix of me by n
+# jacci::Opt{Matrix{T}}                      # Changed 20211029: now matrix of mi by n
 # gradF::Opt{Matrix{Vector{T}}}               # Matrix of dim l x q of n length vectors (the gradients wrt x)
 # hessf::Opt{Matrix{T}}                       # Matrix dim n x n
 # hessce::Opt{Vector{Matrix{T}}}              # Vector of length me of 2d Hessian matrices
@@ -480,28 +482,28 @@ end
 # cidp::Opt{Vector{Vector{T}}}                # Vector of length r of vectors of length mi
 # Fdp::Opt{Vector{Matrix{T}}}                 # Vector of length r of matrix of dim l x q
 # gradfdp::Opt{Vector{Vector{T}}}             # Vector of length r of gradients of f/dp (vectors of length n)
-# gradcedp::Opt{Vector{Matrix{T}}}            # Vector of length r of gradce, each /dp
-# gradcidp::Opt{Vector{Matrix{T}}}            # Vector of length r of gradci, each /dp
+# jaccedp::Opt{Vector{Matrix{T}}}            # Vector of length r of jacce, each /dp
+# jaccidp::Opt{Vector{Matrix{T}}}            # Vector of length r of jacci, each /dp
 # gradFdp::Opt{Vector{Matrix{Vector{T}}}}     # Vector of length r of gradF, each /dp
 
 
 struct MPCCModelSparseSym <: AbstractMPCCModelSparse
     config::MPCCModelConfig
     sparsity_gradf::SparseMatrixCSC     # {Bool, Int64}
-    sparsity_gradce::SparseMatrixCSC
-    sparsity_gradci::SparseMatrixCSC
+    sparsity_jacce::SparseMatrixCSC
+    sparsity_jacci::SparseMatrixCSC
     sparsity_gradF::Matrix{SparseMatrixCSC}
     sparsity_hessf::SparseMatrixCSC
     sparsity_hessce::Vector{SparseMatrixCSC}
     sparsity_hessci::Vector{SparseMatrixCSC}
     sparsity_hessF::Matrix{SparseMatrixCSC}
     sparsity_gradfdp::Vector{SparseMatrixCSC}
-    sparsity_gradcedp::Vector{SparseMatrixCSC}
-    sparsity_gradcidp::Vector{SparseMatrixCSC}
+    sparsity_jaccedp::Vector{SparseMatrixCSC}
+    sparsity_jaccidp::Vector{SparseMatrixCSC}
     sparsity_gradFdp::Vector{Matrix{SparseMatrixCSC}}
     gradf_sparse_num::SparseMatrixCSC
-    gradce_sparse_num::SparseMatrixCSC
-    gradci_sparse_num::SparseMatrixCSC
+    jacce_sparse_num::SparseMatrixCSC
+    jacci_sparse_num::SparseMatrixCSC
     gradF_sparse_num::Matrix{SparseMatrixCSC}
     hessf_sparse_num::SparseMatrixCSC
     hessce_sparse_num::Vector{SparseMatrixCSC}
@@ -512,8 +514,8 @@ struct MPCCModelSparseSym <: AbstractMPCCModelSparse
     cidp_sparse_num::Vector
     Fdp_sparse_num::Vector{Matrix}
     gradfdp_sparse_num::Vector{SparseMatrixCSC}
-    gradcedp_sparse_num::Vector{SparseMatrixCSC}
-    gradcidp_sparse_num::Vector{SparseMatrixCSC}
+    jaccedp_sparse_num::Vector{SparseMatrixCSC}
+    jaccidp_sparse_num::Vector{SparseMatrixCSC}
     gradFdp_sparse_num::Vector{Matrix{SparseMatrixCSC}}
     f::Function
     f!::Opt{Function}
@@ -527,10 +529,10 @@ struct MPCCModelSparseSym <: AbstractMPCCModelSparse
     # Fq!::Opt{Function}
     gradf::Function
     gradf!::Opt{Function}
-    gradce::Function
-    gradce!::Opt{Function}
-    gradci::Function
-    gradci!::Opt{Function}
+    jacce::Function
+    jacce!::Opt{Function}
+    jacci::Function
+    jacci!::Opt{Function}
     gradF::Function
     gradF!::Opt{Function}
     # gradFq::Function
@@ -555,10 +557,10 @@ struct MPCCModelSparseSym <: AbstractMPCCModelSparse
     Fdp!::Opt{Function}
     gradfdp::Function
     gradfdp!::Opt{Function}
-    gradcedp::Function
-    gradcedp!::Opt{Function}
-    gradcidp::Function
-    gradcidp!::Opt{Function}
+    jaccedp::Function
+    jaccedp!::Opt{Function}
+    jaccidp::Function
+    jaccidp!::Opt{Function}
     gradFdp::Function
     gradFdp!::Opt{Function}
 end
@@ -583,3 +585,170 @@ struct MPCCNewtonPenaltyFunctions
     gradϕ::Function
     hessϕ::Function
 end
+
+
+
+
+
+
+"""
+    MPCCIdxElement
+
+Convenient type union for when passing an index as an argument, not to be used
+in struct definitions!
+"""
+MPCCIdxElement = Union{S, T} where {S <: Integer, T <: CartesianIndex}
+
+
+
+"""
+    MPCCActivesetCnstrType
+
+Enumeration of the different possible constraint types: equality, inequality,
+and each individual constraint in a complementarity.
+"""
+@enum MPCCActivesetCnstrType CNSTR_TYPE_CE=1 CNSTR_TYPE_CI=2 CNSTR_TYPE_F=3
+
+
+
+"""
+    MPCCConstraintSet
+
+A constraint set, e.g. for storing a working or active set. It works by
+collecting a vector of base indices. By a standard definition, each constraint
+in a problem has a unique base index.
+
+So we (only) need to store the problem dimension and the vector of BIs. There
+are functions that encode the logic to do the opposite conversion. In practice,
+we actually save the model config because for display purposes, it allows us to
+list the actual constraint expressions.
+"""
+struct MPCCConstraintSet
+    # dimspec::MPCCDimSpec
+    config::MPCCModelConfig
+    to_bi::Vector{Int64}
+end
+
+# Can't remember if I wrote this to avoid the crap with == and ===, neither of
+# which seem to do what I want.  But it works, so use is_eql() explicitly.
+function is_eql(x::MPCCConstraintSet, y::MPCCConstraintSet)
+    return ( x.to_bi == y.to_bi && x.dimspec == y.dimspec )
+end
+export is_eql
+
+import Base: length
+function length(cnstr_set::MPCCConstraintSet)
+    return length(cnstr_set.to_bi)
+end
+
+
+
+function show(io::IO, ::MIME"text/plain", cnstr_set::MPCCConstraintSet)
+    @unpack config = cnstr_set
+    @unpack dimspec = config
+    @unpack n, q, l, me, mi = dimspec
+
+    bi_ctr = 0
+
+    println("\nCE (me=$me)")
+    println("--------------------")
+    for lp_ce = 1:me
+        bi_ctr += 1
+        if (cs_bi_to_cnstr_el(cnstr_set, bi_ctr) !== missing)
+                println("[$bi_ctr] : {ce, $lp_ce} : ", config.defn.ce[lp_ce])
+        else
+            println("[$bi_ctr]")
+        end
+    end
+
+    println("\nCI (mi=$mi)")
+    println("--------------------")
+    for lp_ci = 1:mi
+        bi_ctr += 1
+        if (cs_bi_to_cnstr_el(cnstr_set, bi_ctr) !== missing)
+            println("[$bi_ctr] : {ci, $lp_ci} : ", config.defn.ci[lp_ci])
+        else
+            println("[$bi_ctr]")
+        end
+    end
+
+    println("\nF (l=$l, q=$q)")
+    println("--------------------")
+    for lp_q = 1:q
+        for lp_l = 1:l
+            bi_ctr += 1
+            if (cs_bi_to_cnstr_el(cnstr_set, bi_ctr) !== missing)
+                    println("[$bi_ctr] : {F, ($lp_l, $lp_q)} : ", config.defn.F[lp_l, lp_q])
+            else
+                println("[$bi_ctr]")
+            end
+        end
+    end
+end
+
+
+
+
+# function cnstr_idxs_display(cnstr_set::MPCCConstraintSet; lm=nothing)
+#     @unpack dimspec = config
+#     @unpack n, q, l, me, mi = dimspec
+
+#     bi_ctr = 0
+#     lm_ctr = 0
+
+#     println("\nCE (me=$me)")
+#     println("--------------------")
+#     for lp_ce = 1:me
+#         bi_ctr += 1
+#         if (cs_bi_to_cnstr_el(cnstr_set, bi_ctr) !== missing)
+#             if (isnothing(lm))
+#                 println("[$bi_ctr] : {ce, $lp_ce} : ", config.defn.ce[lp_ce])
+#             else
+#                 lm_ctr += 1
+#                 println("[$bi_ctr] : {ce, $lp_ce} : LM=", lm[lm_ctr], " : ", config.defn.ce[lp_ce])
+#             end
+#         else
+#             println("[$bi_ctr]")
+#         end
+#     end
+
+#     println("\nCI (mi=$mi)")
+#     println("--------------------")
+#     for lp_ci = 1:mi
+#         bi_ctr += 1
+#         if (cs_bi_to_cnstr_el(cnstr_set, bi_ctr) !== missing)
+#             if (isnothing(lm))
+#                 println("[$bi_ctr] : {ci, $lp_ci} : ", config.defn.ci[lp_ci])
+#             else
+#                 lm_ctr += 1
+#                 println("[$bi_ctr] : {ci, $lp_ci} : LM=", lm[lm_ctr], " : ", config.defn.ci[lp_ci])
+#             end
+#         else
+#             println("[$bi_ctr]")
+#         end
+#     end
+
+#     println("\nF (l=$l, q=$q)")
+#     println("--------------------")
+#     for lp_q = 1:q
+#         for lp_l = 1:l
+#             bi_ctr += 1
+#             if (cs_bi_to_cnstr_el(cnstr_set, bi_ctr) !== missing)
+#                 if (isnothing(lm))
+#                     println("[$bi_ctr] : {F, ($lp_l, $lp_q)} : ", config.defn.F[lp_l, lp_q])
+#                 else
+#                     println("[$bi_ctr] : {F, ($lp_l, $lp_q)} : LM=", lm[lm_ctr], " : ", config.defn.F[lp_l, lp_q])
+#                 end
+#             else
+#                 println("[$bi_ctr]")
+#             end
+#         end
+#     end
+# end
+
+
+
+
+
+
+

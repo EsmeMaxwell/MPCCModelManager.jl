@@ -1,16 +1,11 @@
 module MPCCModelManager
 
-# TODO perhaps make more generic by defining all the operations in a custom sense.  Perhaps a 2.0 type of thing.
-
-
 using SparseArrays, ForwardDiff, LinearAlgebra, UnPack, RuntimeGeneratedFunctions, SymbolicUtils, Symbolics
-# StaticArrays
 
 const MPCCMM_ROOT_DIR = @__DIR__
 
 RuntimeGeneratedFunctions.init(@__MODULE__)
 
-@warn "Changed gradients from column to row vectors"
 
 
 # Shit we might provide a method for using our custom types
@@ -23,33 +18,56 @@ include("mpccmodel_proc_model.jl")
 include("mpccmodel_calc_forwarddiff_dense.jl")
 include("mpccmodel_calc_symdiff_sparse.jl")
 include("mpccmodel_calc_forwarddiff_newton_penalty.jl")
+include("mpccmodel_constraint_sets.jl")
 include("mpccmodel_pointeval.jl")
+include("mpccmodel_inc_samples.jl")
 include("mpccmodel_test.jl")
 
 
+# mpccmodel_proc_model.jl
 export  mpccmodel_build_sym_nums,
         mpccmodel_build_fn_from_defn,
+        mpccmodel_build_parameterisation,
         mpccmodel_construct_config,
         mpccmodel_load_defn_from_file,
-        mpccmodel_build_fixed_jump_fns,
-        mpccmodel_setup_forwarddiff_dense,
-        mpccmodel_setup_symdiff_sparse,
-        mpccmodel_setup_newton_penalty
+        mpccmodel_build_fixed_jump_fns
 
 
+# mpccmodel_calc_forwarddiff_dense.jl
+export  mpccmodel_setup_forwarddiff_dense
+
+# mpccmodel_calc_symdiff_sparse.jl
+export  mpccmodel_setup_symdiff_sparse
+
+# mpccmodel_setup_newton_penalty.jl
+export  mpccmodel_setup_newton_penalty
+
+# mpccmodel_constraint_sets.jl
+export  cs_cpair_to_bi,
+        cs_bi_to_cpair,
+        cs_cnstr_el_to_bi,
+        cs_bi_to_cnstr_el,
+        cs_cnstr_el_to_cpair,
+        cs_cpair_to_cnstr_el,
+        cs_cnstr_idxs_add_by_bi!,
+        cs_cnstr_idxs_add_by_cpair!,
+        cs_cnstr_idxs_del_by_cnstr_el!,
+        cs_cnstr_idxs_del_by_bi!,
+        cs_cnstr_idxs_del_by_cpair!,
+        cs_cnstr_get_as_bitmask,
+        cs_cnstr_build_from_bitmask,
+        cs_cnstr_build_all_active,
+        cs_cnstr_get_Fq_count,
+        cs_cnstr_get_all_active_bi
 
 
-# More recent note: having pr and ps, then gradp, etc, is a bit werid.  cannot take derivative wrt ps, so perhaps change notation
 
 # TODO
 # - remove line numbers from generated functions, inline what need inlined, remove bounds checks where appropriate
-# - deal with transpose for ce, ci.
-# - remove f() in the knownsolutions eval, unncessary and creates a headache
 
+# - change notation for jacce, etc, to jacce and then write proper jacce
 
- # - for forwarddiff processing, cast results properly
-
-# NOTE(i): We leave the return types fairly vague and allow caller to specify whether they want sparse, dense, or even static arrays.
+# TODO perhaps make more generic by defining all the operations in a custom sense.  Perhaps a 2.0 type of thing.
 
 
 # NOTE reminders to self:
@@ -60,9 +78,6 @@ export  mpccmodel_build_sym_nums,
 # TODO should probably inline the small functions in each model definition
 # TODO check ForwardDiff cfg
 # TODO saving of lower order derivatives?
-
-
-
 
 
 

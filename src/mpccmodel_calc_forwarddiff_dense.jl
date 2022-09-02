@@ -2,27 +2,7 @@
 
 
 # Finish checcking type stability....
-
-
-
-
-
-
 # RESOLVED (faster as it is, and type stable) Should the ::Matrix{P} annotation be on the rhs, or move to the lhs?
-
-
-# --------------------------- older stuff?
-
-# TODO: have just removed some converts() because the promote_type obviously doesn't work when input empty
-
-# Note: Might need to relax the type on mutation arguments for the mm_ functions, not the exported functions though.
-# Might also need to relax the typing on arguments for the local functions in mm_ functions.
-
-# Need to ensure convert() is used consistently
-
-#------------------------------
-
-    
 
 
 
@@ -32,12 +12,11 @@
 
 
 Accepts model config and returns a struct with all the nice Julia functions to
-calculate Jacobians, Hessians, and parametric derivatives using
-ForwardDiff.jl.
+calculate Jacobians, Hessians, and parametric derivatives using ForwardDiff.jl.
 
 Both standard and mutating functions are constructed. Most of the functions
-accept an index as the last argument to specify a subset of the constraints.
-For F constraints, this should be a vector of either tuple pairs or
+accept an index as the last argument to specify a subset of the constraints. For
+F constraints, this should be a vector of either tuple pairs or
 CartesianIndexes.
 """
 function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
@@ -177,46 +156,46 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
     end
 
 
-    # Full gradce functions
-    function local_gradce(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
-        return mm_fd_dn_gradce(dimspec, ce, x, pr, ps)
+    # Full jacce functions
+    function local_jacce(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
+        return mm_fd_dn_jacce(dimspec, ce, x, pr, ps)
     end
 
-    function local_gradce!(out_gradce::AbstractMatrix, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64})::Nothing where {S <: Real, T <: Real}
-        mm_fd_dn_gradce!(out_gradce, dimspec, ce!, x, pr, ps)
+    function local_jacce!(out_jacce::AbstractMatrix, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64})::Nothing where {S <: Real, T <: Real}
+        mm_fd_dn_jacce!(out_jacce, dimspec, ce!, x, pr, ps)
         return nothing
     end
 
 
-    # Indexed gradce functions
-    function local_gradce(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ce::AbstractVector{Int64}) where {S <: Real, T <: Real}
-        return mm_fd_dn_gradce_i(dimspec, ce_i, x, pr, ps, idxs_ce)
+    # Indexed jacce functions
+    function local_jacce(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ce::AbstractVector{Int64}) where {S <: Real, T <: Real}
+        return mm_fd_dn_jacce_i(dimspec, ce_i, x, pr, ps, idxs_ce)
     end
 
-    function local_gradce!(out_gradce_i::AbstractMatrix, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ce::AbstractVector{Int64})::Nothing where {S <: Real, T <: Real}
-        mm_fd_dn_gradce_i!(out_gradce_i, dimspec, ce_i!, x, pr, ps, idxs_ce)
+    function local_jacce!(out_jacce_i::AbstractMatrix, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ce::AbstractVector{Int64})::Nothing where {S <: Real, T <: Real}
+        mm_fd_dn_jacce_i!(out_jacce_i, dimspec, ce_i!, x, pr, ps, idxs_ce)
         return nothing
     end
 
 
-    # Full gradci functions
-    function local_gradci(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
-        return mm_fd_dn_gradci(dimspec, ci, x, pr, ps)
+    # Full jacci functions
+    function local_jacci(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
+        return mm_fd_dn_jacci(dimspec, ci, x, pr, ps)
     end
 
-    function local_gradci!(out_gradci::AbstractMatrix, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64})::Nothing where {S <: Real, T <: Real}
-        mm_fd_dn_gradci!(out_gradci, dimspec, ci!, x, pr, ps)
+    function local_jacci!(out_jacci::AbstractMatrix, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64})::Nothing where {S <: Real, T <: Real}
+        mm_fd_dn_jacci!(out_jacci, dimspec, ci!, x, pr, ps)
         return nothing
     end
 
 
-    # Indexed gradci functions
-    function local_gradci(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ci::AbstractVector{Int64}) where {S <: Real, T <: Real}
-        return mm_fd_dn_gradci_i(dimspec, ci_i, x, pr, ps, idxs_ci)
+    # Indexed jacci functions
+    function local_jacci(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ci::AbstractVector{Int64}) where {S <: Real, T <: Real}
+        return mm_fd_dn_jacci_i(dimspec, ci_i, x, pr, ps, idxs_ci)
     end
 
-    function local_gradci!(out_gradci_i::AbstractMatrix, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ci::AbstractVector{Int64})::Nothing where {S <: Real, T <: Real}
-        mm_fd_dn_gradci_i!(out_gradci_i, dimspec, ci_i!, x, pr, ps, idxs_ci)
+    function local_jacci!(out_jacci_i::AbstractMatrix, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ci::AbstractVector{Int64})::Nothing where {S <: Real, T <: Real}
+        mm_fd_dn_jacci_i!(out_jacci_i, dimspec, ci_i!, x, pr, ps, idxs_ci)
         return nothing
     end
 
@@ -502,46 +481,46 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
 
 
 
-    # Full gradcedp functions
-    function local_gradcedp(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}  # ::Vector{Matrix{S}}
-        return mm_fd_dn_gradcedp(dimspec, ce, x, pr, ps)
+    # Full jaccedp functions
+    function local_jaccedp(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}  # ::Vector{Matrix{S}}
+        return mm_fd_dn_jaccedp(dimspec, ce, x, pr, ps)
     end
 
-    function local_gradcedp!(out_gradcedp::AbstractVector, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64})::Nothing where {S <: Real, T <: Real}
-        mm_fd_dn_gradcedp!(out_gradcedp, dimspec, ce!, x, pr, ps)
+    function local_jaccedp!(out_jaccedp::AbstractVector, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64})::Nothing where {S <: Real, T <: Real}
+        mm_fd_dn_jaccedp!(out_jaccedp, dimspec, ce!, x, pr, ps)
         return nothing
     end
 
 
-    # Indexed gradcedp functions
-    function local_gradcedp(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ce::AbstractVector{Int64})::Vector{Matrix{T}} where {S <: Real, T <: Real}
-        return mm_fd_dn_gradcedp_i(dimspec, ce_i, x, pr, ps, idxs_ce)
+    # Indexed jaccedp functions
+    function local_jaccedp(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ce::AbstractVector{Int64})::Vector{Matrix{T}} where {S <: Real, T <: Real}
+        return mm_fd_dn_jaccedp_i(dimspec, ce_i, x, pr, ps, idxs_ce)
     end
 
-    function local_gradcedp!(out_gradcedp_i::AbstractVector, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ce::AbstractVector{Int64})::Nothing where {S <: Real, T <: Real}
-        mm_fd_dn_gradcedp_i!(out_gradcedp_i, dimspec, ce_i!, x, pr, ps, idxs_ce)
+    function local_jaccedp!(out_jaccedp_i::AbstractVector, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ce::AbstractVector{Int64})::Nothing where {S <: Real, T <: Real}
+        mm_fd_dn_jaccedp_i!(out_jaccedp_i, dimspec, ce_i!, x, pr, ps, idxs_ce)
         return nothing
     end
 
 
-    # Full gradcidp functions
-    function local_gradcidp(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
-        return mm_fd_dn_gradcidp(dimspec, ci, x, pr, ps)
+    # Full jaccidp functions
+    function local_jaccidp(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
+        return mm_fd_dn_jaccidp(dimspec, ci, x, pr, ps)
     end
 
-    function local_gradcidp!(out_gradcidp::AbstractVector, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64})::Nothing where {S <: Real, T <: Real}
-        mm_fd_dn_gradcidp!(out_gradcidp, dimspec, ci!, x, pr, ps)
+    function local_jaccidp!(out_jaccidp::AbstractVector, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64})::Nothing where {S <: Real, T <: Real}
+        mm_fd_dn_jaccidp!(out_jaccidp, dimspec, ci!, x, pr, ps)
         return nothing
     end
 
 
-    # Indexed gradcidp functions
-    function local_gradcidp(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ci::AbstractVector{Int64})::Vector{Matrix{S}} where {S <: Real, T <: Real}
-        return mm_fd_dn_gradcidp_i(dimspec, ci_i, x, pr, ps, idxs_ci)
+    # Indexed jaccidp functions
+    function local_jaccidp(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ci::AbstractVector{Int64})::Vector{Matrix{S}} where {S <: Real, T <: Real}
+        return mm_fd_dn_jaccidp_i(dimspec, ci_i, x, pr, ps, idxs_ci)
     end
 
-    function local_gradcidp!(out_gradcidp_i::AbstractVector, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ci::AbstractVector{Int64})::Nothing where {S <: Real, T <: Real}
-        mm_fd_dn_gradcidp_i!(out_gradcidp_i, dimspec, ci_i!, x, pr, ps, idxs_ci)
+    function local_jaccidp!(out_jaccidp_i::AbstractVector, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ci::AbstractVector{Int64})::Nothing where {S <: Real, T <: Real}
+        mm_fd_dn_jaccidp_i!(out_jaccidp_i, dimspec, ci_i!, x, pr, ps, idxs_ci)
         return nothing
     end
 
@@ -587,8 +566,8 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
                         local_F, local_F!,
                         local_Fq, local_Fq!,
                         local_gradf, local_gradf!,
-                        local_gradce, local_gradce!,
-                        local_gradci, local_gradci!,
+                        local_jacce, local_jacce!,
+                        local_jacci, local_jacci!,
                         local_gradF, local_gradF!,
                         local_gradFq, local_gradFq!,
                         local_hessf, local_hessf!,
@@ -601,8 +580,8 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
                         local_cidp, local_cidp!,
                         local_Fdp, local_Fdp!,
                         local_gradfdp, local_gradfdp!,
-                        local_gradcedp, local_gradcedp!,
-                        local_gradcidp, local_gradcidp!,
+                        local_jaccedp, local_jaccedp!,
+                        local_jaccidp, local_jaccidp!,
                         local_gradFdp, local_gradFdp!
                         # local_do_self_test,
                         # nz_mask 
@@ -701,8 +680,8 @@ end
 
 
 
-# Full gradce functions
-function mm_fd_dn_gradce(dimspec::MPCCDimSpec, ce::Function, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
+# Full jacce functions
+function mm_fd_dn_jacce(dimspec::MPCCDimSpec, ce::Function, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
     P = promote_type(S, T)
 
     # Shortcut for empty result: ensures type stable (fails assert with FD), and gets dimensions correct
@@ -716,27 +695,27 @@ function mm_fd_dn_gradce(dimspec::MPCCDimSpec, ce::Function, x::AbstractVector{S
 end
 
 
-function mm_fd_dn_gradce!(out_gradce::AbstractArray, dimspec::MPCCDimSpec, ce!::Function, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64})::Nothing where {S <: Real, T <: Real}
+function mm_fd_dn_jacce!(out_jacce::AbstractArray, dimspec::MPCCDimSpec, ce!::Function, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64})::Nothing where {S <: Real, T <: Real}
     @unpack n, me = dimspec
     local_ce! = (y::AbstractArray, z::AbstractArray) -> ce!(y, z, pr, ps)
 
     # ForwardDiff asks for a temporary storage area, presumably so that caller can manage memory allocs
     # We do this here for now, perhaps move it upstream later.
     y = zeros(promote_type(S, T), me)
-    ForwardDiff.jacobian!(out_gradce, local_ce!, y, x)
+    ForwardDiff.jacobian!(out_jacce, local_ce!, y, x)
     return nothing
 end
 
 
-# Indexed gradce functions
-function mm_fd_dn_gradce_i(dimspec::MPCCDimSpec, ce_i::AbstractVector{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ce::AbstractVector{Int64}) where {F <: Function, S <: Real, T <: Real}
+# Indexed jacce functions
+function mm_fd_dn_jacce_i(dimspec::MPCCDimSpec, ce_i::AbstractVector{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ce::AbstractVector{Int64}) where {F <: Function, S <: Real, T <: Real}
     P = promote_type(S, T)
     local_ce = (z::AbstractArray) -> mm_fd_dn_ce_i(dimspec, ce_i, z, pr, ps, idxs_ce)
     return ForwardDiff.jacobian(local_ce, x)::Matrix{P}
 end
 
 
-function mm_fd_dn_gradce_i!(out_gradce_i::AbstractArray, dimspec::MPCCDimSpec, ce_i!::AbstractVector{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ce::AbstractVector{Int64})::Nothing where {F <: Function, S <: Real, T <: Real}
+function mm_fd_dn_jacce_i!(out_jacce_i::AbstractArray, dimspec::MPCCDimSpec, ce_i!::AbstractVector{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ce::AbstractVector{Int64})::Nothing where {F <: Function, S <: Real, T <: Real}
     @unpack n = dimspec    
     len_idxs_ce_i = length(idxs_ce)
     local_ce! = (y::AbstractArray, z::AbstractArray) -> mm_fd_dn_ce_i!(y, dimspec, ce_i!, z, pr, ps, idxs_ce)
@@ -744,7 +723,7 @@ function mm_fd_dn_gradce_i!(out_gradce_i::AbstractArray, dimspec::MPCCDimSpec, c
     # ForwardDiff asks for a temporary storage area, presumably so that caller can manage memory allocs
     # We do this here for now, perhaps move it upstream later.
     y = zeros(promote_type(S, T), len_idxs_ce_i)
-    ForwardDiff.jacobian!(out_gradce_i, local_ce!, y, x)
+    ForwardDiff.jacobian!(out_jacce_i, local_ce!, y, x)
     return nothing    
 end
 
@@ -754,8 +733,8 @@ end
 
 
 
-# Full gradci functions
-function mm_fd_dn_gradci(dimspec::MPCCDimSpec, ci::Function, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
+# Full jacci functions
+function mm_fd_dn_jacci(dimspec::MPCCDimSpec, ci::Function, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
     P = promote_type(S, T)
 
     # Shortcut for empty result: ensures type stable (fails assert with FD), and gets dimensions correct
@@ -769,27 +748,27 @@ function mm_fd_dn_gradci(dimspec::MPCCDimSpec, ci::Function, x::AbstractVector{S
 end
 
 
-function mm_fd_dn_gradci!(out_gradci::AbstractArray, dimspec::MPCCDimSpec, ci!::Function, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64})::Nothing where {S <: Real, T <: Real}
+function mm_fd_dn_jacci!(out_jacci::AbstractArray, dimspec::MPCCDimSpec, ci!::Function, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64})::Nothing where {S <: Real, T <: Real}
     @unpack n, mi = dimspec
     local_ci! = (y::AbstractArray, z::AbstractArray) -> ci!(y, z, pr, ps)
     
     # ForwardDiff asks for a temporary storage area, presumably so that caller can manage memory allocs
     # We do this here for now, perhaps move it upstream later.
     y = zeros(promote_type(S, T), mi)
-    ForwardDiff.jacobian!(out_gradci, local_ci!, y, x)
+    ForwardDiff.jacobian!(out_jacci, local_ci!, y, x)
     return nothing
 end
 
 
-# Indexed gradci functions
-function mm_fd_dn_gradci_i(dimspec::MPCCDimSpec, ci_i::AbstractVector{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ci::AbstractVector{Int64}) where {F <: Function, S <: Real, T <: Real}
+# Indexed jacci functions
+function mm_fd_dn_jacci_i(dimspec::MPCCDimSpec, ci_i::AbstractVector{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ci::AbstractVector{Int64}) where {F <: Function, S <: Real, T <: Real}
     P = promote_type(S, T)
     local_ci = (z::AbstractArray) -> mm_fd_dn_ci_i(dimspec, ci_i, z, pr, ps, idxs_ci)
     return ForwardDiff.jacobian(local_ci, x)::Matrix{P}
 end
 
 
-function mm_fd_dn_gradci_i!(out_gradci_i::AbstractArray, dimspec::MPCCDimSpec, ci_i!::AbstractVector{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ci::AbstractVector{Int64})::Nothing where {F <: Function, S <: Real, T <: Real}
+function mm_fd_dn_jacci_i!(out_jacci_i::AbstractArray, dimspec::MPCCDimSpec, ci_i!::AbstractVector{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ci::AbstractVector{Int64})::Nothing where {F <: Function, S <: Real, T <: Real}
     @unpack n = dimspec    
     len_idxs_ci_i = length(idxs_ci)
     local_ci! = (y::AbstractArray, z::AbstractArray) -> mm_fd_dn_ci_i!(y, dimspec, ci_i!, z, pr, ps, idxs_ci)
@@ -797,7 +776,7 @@ function mm_fd_dn_gradci_i!(out_gradci_i::AbstractArray, dimspec::MPCCDimSpec, c
     # ForwardDiff asks for a temporary storage area, presumably so that caller can manage memory allocs
     # We do this here for now, perhaps move it upstream later.
     y = zeros(promote_type(S, T), len_idxs_ci_i)
-    ForwardDiff.jacobian!(out_gradci_i, local_ci!, y, x)
+    ForwardDiff.jacobian!(out_jacci_i, local_ci!, y, x)
     return nothing    
 end
 
@@ -1442,8 +1421,8 @@ end
 
 
 
-# Full gradcedp functions
-function mm_fd_dn_gradcedp(dimspec::MPCCDimSpec, ce::Function, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
+# Full jaccedp functions
+function mm_fd_dn_jaccedp(dimspec::MPCCDimSpec, ce::Function, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
     @assert dimspec.r > 0 "r must be positive for parametric calls"
     P = promote_type(S, T)
     @unpack n, me, r = dimspec
@@ -1453,55 +1432,55 @@ function mm_fd_dn_gradcedp(dimspec::MPCCDimSpec, ce::Function, x::AbstractVector
         return Matrix{P}[ Matrix{P}(undef, me, n) for lp_r=1:r ]
     end
 
-    local_gradce = (qr::AbstractArray) -> mm_fd_dn_gradce(dimspec, ce, x, qr, ps)
-    gradcedp_flat = ForwardDiff.jacobian(local_gradce, pr)::Matrix{P}
-    gradcedp = [ reshape(gradcedp_flat[:, lp_pr], (me, n)) for lp_pr in 1:r ]
-    return gradcedp
+    local_jacce = (qr::AbstractArray) -> mm_fd_dn_jacce(dimspec, ce, x, qr, ps)
+    jaccedp_flat = ForwardDiff.jacobian(local_jacce, pr)::Matrix{P}
+    jaccedp = [ reshape(jaccedp_flat[:, lp_pr], (me, n)) for lp_pr in 1:r ]
+    return jaccedp
 end
 
 
-function mm_fd_dn_gradcedp!(out_gradcedp::AbstractArray, dimspec::MPCCDimSpec, ce!::Function, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64})::Nothing where {S <: Real, T <: Real}
+function mm_fd_dn_jaccedp!(out_jaccedp::AbstractArray, dimspec::MPCCDimSpec, ce!::Function, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64})::Nothing where {S <: Real, T <: Real}
     @assert dimspec.r > 0 "r must be positive for parametric calls"
     @unpack n, me, r = dimspec
-    local_gradce! = (z::AbstractArray, qr::AbstractArray) -> mm_fd_dn_gradce!(z, dimspec, ce!, x, qr, ps)
+    local_jacce! = (z::AbstractArray, qr::AbstractArray) -> mm_fd_dn_jacce!(z, dimspec, ce!, x, qr, ps)
 
     # Local alloc, should perhaps do in caller
     y = zeros(promote_type(S, T), me, n)
-    gradcedp_flat = zeros(promote_type(S, T), n*me, r)
-    ForwardDiff.jacobian!(gradcedp_flat, local_gradce!, y, pr)
+    jaccedp_flat = zeros(promote_type(S, T), n*me, r)
+    ForwardDiff.jacobian!(jaccedp_flat, local_jacce!, y, pr)
     for lp_pr=1:r
-        out_gradcedp[lp_pr] = reshape(gradcedp_flat[:, lp_pr], (me, n))
+        out_jaccedp[lp_pr] = reshape(jaccedp_flat[:, lp_pr], (me, n))
     end
     return nothing
 end
 
 
-# Indexed gradcedp
-function mm_fd_dn_gradcedp_i(dimspec::MPCCDimSpec, ce_i::AbstractVector{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ce::AbstractVector{Int64}) where {F <: Function, S <: Real, T <: Real}
+# Indexed jaccedp
+function mm_fd_dn_jaccedp_i(dimspec::MPCCDimSpec, ce_i::AbstractVector{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ce::AbstractVector{Int64}) where {F <: Function, S <: Real, T <: Real}
     @assert dimspec.r > 0 "r must be positive for parametric calls"
     P = promote_type(S, T)
     @unpack n, me, r = dimspec
     len_idxs_ce_i = length(idxs_ce)
-    local_gradce = (qr::AbstractArray) -> mm_fd_dn_gradce_i(dimspec, ce_i, x, qr, ps, idxs_ce)
-    gradcedp_flat = ForwardDiff.jacobian(local_gradce, pr)::Matrix{P}
-    gradcedp = [ reshape(gradcedp_flat[:, lp_pr], (len_idxs_ce_i, n)) for lp_pr in 1:r ]
-    return gradcedp
+    local_jacce = (qr::AbstractArray) -> mm_fd_dn_jacce_i(dimspec, ce_i, x, qr, ps, idxs_ce)
+    jaccedp_flat = ForwardDiff.jacobian(local_jacce, pr)::Matrix{P}
+    jaccedp = [ reshape(jaccedp_flat[:, lp_pr], (len_idxs_ce_i, n)) for lp_pr in 1:r ]
+    return jaccedp
 end
 
 
 
-function mm_fd_dn_gradcedp_i!(out_gradcedp::AbstractArray, dimspec::MPCCDimSpec, ce_i!::AbstractVector{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ce::AbstractVector{Int64})::Nothing where {F <: Function, S <: Real, T <: Real}
+function mm_fd_dn_jaccedp_i!(out_jaccedp::AbstractArray, dimspec::MPCCDimSpec, ce_i!::AbstractVector{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ce::AbstractVector{Int64})::Nothing where {F <: Function, S <: Real, T <: Real}
     @assert dimspec.r > 0 "r must be positive for parametric calls"
     @unpack n, me, r = dimspec
     len_idxs_ce_i = length(idxs_ce)
-    local_gradce! = (z::AbstractArray, qr::AbstractArray) -> mm_fd_dn_gradce_i!(z, dimspec, ce_i!, x, qr, ps, idxs_ce)
+    local_jacce! = (z::AbstractArray, qr::AbstractArray) -> mm_fd_dn_jacce_i!(z, dimspec, ce_i!, x, qr, ps, idxs_ce)
 
     # Local alloc, should perhaps do in caller
     y = zeros(promote_type(S, T), len_idxs_ce_i, n)
-    gradcedp_flat = zeros(promote_type(S, T), n*me, r)
-    ForwardDiff.jacobian!(gradcedp_flat, local_gradce!, y, pr)
+    jaccedp_flat = zeros(promote_type(S, T), n*me, r)
+    ForwardDiff.jacobian!(jaccedp_flat, local_jacce!, y, pr)
     for lp_pr=1:r
-        out_gradcedp[lp_pr] = reshape(gradcedp_flat[:, lp_pr], (len_idxs_ce_i, n))
+        out_jaccedp[lp_pr] = reshape(jaccedp_flat[:, lp_pr], (len_idxs_ce_i, n))
     end
     return nothing
 end
@@ -1512,8 +1491,8 @@ end
 
 
 
-# Full gradcidp functions
-function mm_fd_dn_gradcidp(dimspec::MPCCDimSpec, ci::Function, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
+# Full jaccidp functions
+function mm_fd_dn_jaccidp(dimspec::MPCCDimSpec, ci::Function, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
     @assert dimspec.r > 0 "r must be positive for parametric calls"
     P = promote_type(S, T)
     @unpack n, mi, r = dimspec
@@ -1523,54 +1502,54 @@ function mm_fd_dn_gradcidp(dimspec::MPCCDimSpec, ci::Function, x::AbstractVector
         return Matrix{P}[ Matrix{P}(undef, mi, n) for lp_r=1:r ]
     end
 
-    local_gradci = (qr::AbstractArray) -> mm_fd_dn_gradci(dimspec, ci, x, qr, ps)
-    gradcidp_flat = ForwardDiff.jacobian(local_gradci, pr)::Matrix{P}
-    gradcidp = [ reshape(gradcidp_flat[:, lp_pr], (mi, n)) for lp_pr in 1:r ]
-    return gradcidp
+    local_jacci = (qr::AbstractArray) -> mm_fd_dn_jacci(dimspec, ci, x, qr, ps)
+    jaccidp_flat = ForwardDiff.jacobian(local_jacci, pr)::Matrix{P}
+    jaccidp = [ reshape(jaccidp_flat[:, lp_pr], (mi, n)) for lp_pr in 1:r ]
+    return jaccidp
 end
 
 
-function mm_fd_dn_gradcidp!(out_gradcidp::AbstractArray, dimspec::MPCCDimSpec, ci!::Function, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64})::Nothing where {S <: Real, T <: Real}
+function mm_fd_dn_jaccidp!(out_jaccidp::AbstractArray, dimspec::MPCCDimSpec, ci!::Function, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64})::Nothing where {S <: Real, T <: Real}
     @assert dimspec.r > 0 "r must be positive for parametric calls"
     @unpack n, mi, r = dimspec
-    local_gradci! = (z::AbstractArray, qr::AbstractArray) -> mm_fd_dn_gradci!(z, dimspec, ci!, x, qr, ps)
+    local_jacci! = (z::AbstractArray, qr::AbstractArray) -> mm_fd_dn_jacci!(z, dimspec, ci!, x, qr, ps)
 
     # Local alloc, should perhaps do in caller
     y = zeros(promote_type(S, T), mi, n)
-    gradcidp_flat = zeros(promote_type(S, T), n*mi, r)
-    ForwardDiff.jacobian!(gradcidp_flat, local_gradci!, y, pr)
+    jaccidp_flat = zeros(promote_type(S, T), n*mi, r)
+    ForwardDiff.jacobian!(jaccidp_flat, local_jacci!, y, pr)
     for lp_pr=1:r
-        out_gradcidp[lp_pr] = reshape(gradcidp_flat[:, lp_pr], (mi, n))
+        out_jaccidp[lp_pr] = reshape(jaccidp_flat[:, lp_pr], (mi, n))
     end
     return nothing
 end
 
 
-# Indexed gradcidp
-function mm_fd_dn_gradcidp_i(dimspec::MPCCDimSpec, ci_i::AbstractVector{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ci::AbstractVector{Int64}) where {F <: Function, S <: Real, T <: Real}
+# Indexed jaccidp
+function mm_fd_dn_jaccidp_i(dimspec::MPCCDimSpec, ci_i::AbstractVector{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ci::AbstractVector{Int64}) where {F <: Function, S <: Real, T <: Real}
     @assert dimspec.r > 0 "r must be positive for parametric calls"
     P = promote_type(S, T)
     @unpack n, mi, r = dimspec
     len_idxs_ci_i = length(idxs_ci)
-    local_gradci = (qr::AbstractArray) -> mm_fd_dn_gradci_i(dimspec, ci_i, x, qr, ps, idxs_ci)
-    gradcidp_flat = ForwardDiff.jacobian(local_gradci, pr)::Matrix{P}
-    gradcidp = [ reshape(gradcidp_flat[:, lp_pr], (len_idxs_ci_i, n)) for lp_pr in 1:r ]
-    return gradcidp
+    local_jacci = (qr::AbstractArray) -> mm_fd_dn_jacci_i(dimspec, ci_i, x, qr, ps, idxs_ci)
+    jaccidp_flat = ForwardDiff.jacobian(local_jacci, pr)::Matrix{P}
+    jaccidp = [ reshape(jaccidp_flat[:, lp_pr], (len_idxs_ci_i, n)) for lp_pr in 1:r ]
+    return jaccidp
 end
 
 
-function mm_fd_dn_gradcidp_i!(out_gradcidp::AbstractArray, dimspec::MPCCDimSpec, ci_i!::AbstractVector{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ci::AbstractVector{Int64})::Nothing where {F <: Function, S <: Real, T <: Real}
+function mm_fd_dn_jaccidp_i!(out_jaccidp::AbstractArray, dimspec::MPCCDimSpec, ci_i!::AbstractVector{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ci::AbstractVector{Int64})::Nothing where {F <: Function, S <: Real, T <: Real}
     @assert dimspec.r > 0 "r must be positive for parametric calls"
     @unpack n, mi, r = dimspec
     len_idxs_ci_i = length(idxs_ci)
-    local_gradci! = (z::AbstractArray, qr::AbstractArray) -> mm_fd_dn_gradci_i!(z, dimspec, ci_i!, x, qr, ps, idxs_ci)
+    local_jacci! = (z::AbstractArray, qr::AbstractArray) -> mm_fd_dn_jacci_i!(z, dimspec, ci_i!, x, qr, ps, idxs_ci)
 
     # Local alloc, should perhaps do in caller
     y = zeros(promote_type(S, T), len_idxs_ci_i, n)
-    gradcidp_flat = zeros(promote_type(S, T), n*mi, r)
-    ForwardDiff.jacobian!(gradcidp_flat, local_gradci!, y, pr)
+    jaccidp_flat = zeros(promote_type(S, T), n*mi, r)
+    ForwardDiff.jacobian!(jaccidp_flat, local_jacci!, y, pr)
     for lp_pr=1:r
-        out_gradcidp[lp_pr] = reshape(gradcidp_flat[:, lp_pr], (len_idxs_ci_i, n))
+        out_jaccidp[lp_pr] = reshape(jaccidp_flat[:, lp_pr], (len_idxs_ci_i, n))
     end
     return nothing
 end
