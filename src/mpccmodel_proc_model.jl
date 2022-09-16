@@ -119,6 +119,7 @@ function mpccmodel_build_parameterisation(defns::Vector{MPCCParameterisationDefn
     len_defns = length(defns)
 
     fns = Vector{MPCCParameterisationFunctions}(undef, len_defns)
+    precalc_pr_startend = Vector{Tuple{Vector, Vector}}(undef, len_defns)
     bf_results = Vector{Any}(undef, len_defns)
     bf_dt_results = Vector{Any}(undef, len_defns)
     sym_prdt = Vector{Vector{Num}}(undef, len_defns)
@@ -135,9 +136,12 @@ function mpccmodel_build_parameterisation(defns::Vector{MPCCParameterisationDefn
                 bf_dt_results[lp_i][1],
                 bf_dt_results[lp_i][2]
             )
+
+        # Precalc the start and end point
+        precalc_pr_startend[lp_i] = (bf_results[lp_i][1](defns[lp_i].tspan[1]), bf_results[lp_i][1](defns[lp_i].tspan[2]))
     end
 
-    return MPCCParameterisations(t, defns, fns)
+    return MPCCParameterisations(t, defns, fns, precalc_pr_startend)
 end
 
 

@@ -335,7 +335,6 @@ The definition for a parameterisation of a model, i.e. how the `pr` depends on `
 """
 struct MPCCParameterisationDefn{R <: Real}
     pr::Vector{Num}
-    # prdt::Num
     tspan::Tuple{R, R}
     descr::String
 end
@@ -376,6 +375,7 @@ struct MPCCParameterisations
     t::Num  # Symbolics variable
     defns::Vector{MPCCParameterisationDefn}
     fns::Vector{MPCCParameterisationFunctions}
+    precalc_pr_startend::Vector{Tuple{Vector, Vector}}
 end
 
 

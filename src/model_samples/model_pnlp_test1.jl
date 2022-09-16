@@ -20,7 +20,7 @@ end
 function model_pnlp_test1_defn(x, pr, ps)
     label_model = "Active Set Test 1 (NLP only)"
 
-    f = exp(0.01*(x[1].^2 + x[2].^2))
+    f = exp(0.01*(x[1]^2 + x[2]^2))
     label_f = "Exp quadratic objective "
 
     ce = Vector{Num}()
@@ -73,7 +73,7 @@ end
 
 function model_pnlp_test1_parameterisations(t)
     defn1 = MPCCParameterisationDefn(
-            Vector{Num}([ t ]),
+            Vector{Num}([ t, t ]),
             (0.1, 0.0),
             "Standard"    
         )
