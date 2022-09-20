@@ -39,7 +39,14 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
   
 
     # Full ce functions
-    function local_ce(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}   
+    function local_ce(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
+        P = promote_type(S, T)
+
+        # Shortcut for empty result: ensures type stable (that that we don't return annoying Any[])
+        if 0 == dimspec.me
+            return Vector{P}(undef, 0)
+        end
+    
         return ce(x, pr, ps)
     end
 
@@ -62,13 +69,18 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
 
 
     # Full ci functions
-    function local_ci(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}  
+    function local_ci(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
+        P = promote_type(S, T)
+
+        # Shortcut for empty result: ensures type stable (that that we don't return annoying Any[])
+        if 0 == dimspec.mi
+            return Vector{P}(undef, 0)
+        end
+
         return ci(x, pr, ps)
-        # return fns.ci(x, pr, ps)
     end
 
     function local_ci!(out_ci::AbstractVector, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64})::Nothing where {S <: Real, T <: Real}
-        # fns.ci!(@view(out_ci[:]), x, pr, ps)
         ci!(out_ci, x, pr, ps)
         return nothing
     end
@@ -87,7 +99,13 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
 
     # Full F functions
     function local_F(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}  # ::Matrix{S}
-        # return convert(Matrix{promote_type(S, T)}, fns.F(x, pr, ps))
+        P = promote_type(S, T)
+
+        # Shortcut for empty result: ensures type stable (that that we don't return annoying Any[])
+        if 0 == dimspec.l || 0 == dimspec.q
+            return Matrix{P}(undef, 0, 0)
+        end
+
         return F(x, pr, ps)
     end
 

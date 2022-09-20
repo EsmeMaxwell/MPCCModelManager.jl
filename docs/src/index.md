@@ -24,10 +24,11 @@ Each model has a dimension specification `MPCCDimSpec`, which details:
 * `r`: The number of continuous parameters, which are assumed implicitly dependent on some real scalar, say "t".
 * `s`: The number of integer parameters, not used yet.
 
-Instantiate the model configuration.  The string parameter determines which file
-to load.
+Instantiate the model configuration. There are some samples included in the
+package (this functionality can be used at runtime though, without world-age
+issues)
 
-`model_cfg = mpccmodel_load_defn_from_file("kj6");`
+`model_cfg = model_pmpcc_kj6_build();`
 
 This struct contains, amongst other things, the following fields:
 
