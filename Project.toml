@@ -1,7 +1,7 @@
 name = "MPCCModelManager"
 uuid = "37930e1d-5501-4f00-9319-9ec29670b665"
 authors = ["Peter Maxwell"]
-version = "0.1.26"
+version = "0.1.28"
 
 [deps]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"

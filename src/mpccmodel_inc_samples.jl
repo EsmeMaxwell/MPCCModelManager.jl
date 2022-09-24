@@ -23,9 +23,17 @@ export model_pnlp_test4_build
 include("./model_samples/model_pnlp_test5.jl")
 export model_pnlp_test5_build
 
+# Active set test model for NLPs 5
+include("./model_samples/model_pnlp_test6.jl")
+export model_pnlp_test6_build
+
 # Kungurtsev and Jaeschke example 3
 include("./model_samples/model_pmpcc_kj3.jl")
 export model_pmpcc_kj3_build
+
+# Kungurtsev and Jaeschke example 3, modification 1
+include("./model_samples/model_pmpcc_kj3mod1.jl")
+export model_pmpcc_kj3mod1_build
 
 # Kungurtsev and Jaeschke example 6
 include("./model_samples/model_pmpcc_kj6.jl")
