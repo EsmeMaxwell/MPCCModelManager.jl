@@ -7,6 +7,10 @@ export model_pmpcc_empty_build
 include("./model_samples/model_pnlp_test1.jl")
 export model_pnlp_test1_build
 
+# Active set test model for NLPs 1 CP
+include("./model_samples/model_pnlp_test1cp.jl")
+export model_pnlp_test1cp_build
+
 # Active set test model for NLPs 2
 include("./model_samples/model_pnlp_test2.jl")
 export model_pnlp_test2_build
