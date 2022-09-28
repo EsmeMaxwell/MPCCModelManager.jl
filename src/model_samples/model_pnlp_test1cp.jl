@@ -36,7 +36,6 @@ function model_pnlp_test1cp_defn(x, pr, ps)
     ci[5] = x[2] -(1/4)*x[1]*(x[1]-2)*(x[1]+2) - 1
     ci[6] = x[2] + 1 -pr[1]
     ci[7] = 5*x[2] + 1 -pr[2]
-    ci[8] = 1 -x[1]^2 -x[2]^2
     ci[8] = (1/16) - (1/3^2)*(x[1]*cos(pi/3) + (x[2]-1)*sin(pi/3)).^2 - (x[1]*sin(pi/3)-(x[2]-1)*cos(pi/3)).^2
     label_ci = Vector{String}([
             "Quadratic (active)",
