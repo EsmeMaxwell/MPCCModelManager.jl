@@ -20,8 +20,8 @@ function model_pnlp_test3_defn(x, pr, ps)
     label_ce = Vector{String}([])
 
     ci = Vector{Num}(undef, 2)
-    ci[1] = x[2] + x[1] - 2.0 + pr[1]
-    ci[2] = x[2] + x[1] - 2.0 - pr[1]
+    ci[1] = (3//2)*x[2] + x[1] - 2.5 + pr[1]
+    ci[2] = (3//2)*x[2] + x[1] - 2.5 - pr[1]
 
     label_ci = Vector{String}([
             "Straight line (active)",
