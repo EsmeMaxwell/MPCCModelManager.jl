@@ -1,15 +1,10 @@
 
 
 
-# Finish checcking type stability....
-# RESOLVED (faster as it is, and type stable) Should the ::Matrix{P} annotation be on the rhs, or move to the lhs?
-
-
 
 
 """
     mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
-
 
 Accepts model config and returns a struct with all the nice Julia functions to
 calculate Jacobians, Hessians, and parametric derivatives using ForwardDiff.jl.
@@ -20,25 +15,23 @@ F constraints, this should be a vector of either tuple pairs or
 CartesianIndexes.
 """
 function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
-
     @unpack dimspec, fns = config
-
     @unpack f, f!, ce, ce!, ce_i, ce_i!, ci, ci!, ci_i, ci_i!, F, F!, F_i, F_i!, Fq, Fq!, Fq_i, Fq_i! = fns
 
-    # Full f functions
+    # ---- [ Full f functions ]
+
     function local_f(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
         return f(x, pr, ps)[1]
-        # return fns.f(x, pr, ps)[1]
     end
 
     function local_f!(out_f::AbstractVector, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64})::Nothing where {S <: Real, T <: Real}
-        # fns.f!(@view(out_f[1]), x, pr, ps)
         f!(out_f, x, pr, ps)
         return nothing
     end
   
 
-    # Full ce functions
+    # ---- [ Full ce functions ]
+
     function local_ce(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
         P = promote_type(S, T)
 
@@ -51,13 +44,13 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
     end
 
     function local_ce!(out_ce::AbstractVector, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64})::Nothing where {S <: Real, T <: Real}
-        # fns.ce!(@view(out_ce[:]), x, pr, ps)
         ce!(out_ce, x, pr, ps)
         return nothing
     end
 
 
-    # Indexed ce functions
+    # ---- [ Indexed ce functions ]
+
     function local_ce(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ce::AbstractVector{Int64}) where {S <: Real, T <: Real} 
         return mm_fd_dn_ce_i(dimspec, ce_i, x, pr, ps, idxs_ce)
     end
@@ -68,7 +61,8 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
     end
 
 
-    # Full ci functions
+    # ---- [ Full ci functions ]
+
     function local_ci(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
         P = promote_type(S, T)
 
@@ -86,7 +80,7 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
     end
 
 
-    # Indexed ci functions
+    # ---- [ Indexed ci functions ]
     function local_ci(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ci::AbstractVector{Int64}) where {S <: Real, T <: Real}  
         return mm_fd_dn_ci_i(dimspec, ci_i, x, pr, ps, idxs_ci)
     end
@@ -97,7 +91,7 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
     end
 
 
-    # Full F functions
+    # ---- [ Full F functions ]
     function local_F(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}  # ::Matrix{S}
         P = promote_type(S, T)
 
@@ -110,13 +104,13 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
     end
 
     function local_F!(out_F::AbstractMatrix, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64})::Nothing where {S <: Real, T <: Real}
-        # fns.F!(@view(out_F[:,:]), x, pr, ps)
         F!(out_F, x, pr, ps)
         return nothing
     end
 
 
-    # Indexed F functions; NOTE, these yeild a vector in the order that the (l,q) index tuples were in!
+    # ---- [ Indexed F functions ] ; NOTE, these yeild a vector in the order that the (l,q) index tuples were in!
+
     function local_F(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_F::Vector{CartesianIndex{2}}) where {S <: Real, T <: Real}  
         return mm_fd_dn_F_i(dimspec, F_i, x, pr, ps, idxs_F)
     end
@@ -138,20 +132,21 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
     end
 
 
-    # Full Fq functions
+    # ---- [ Full Fq functions ]
+
     function local_Fq(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}  
         # return convert(Vector{promote_type(S, T)}, fns.Fq(x, pr, ps))
         return Fq(x, pr, ps)
     end
 
     function local_Fq!(out_Fq::AbstractVector, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64})::Nothing where {S <: Real, T <: Real}
-        # fns.Fq!(@view(out_Fq[:]), x, pr, ps)
         Fq!(out_Fq, x, pr, ps)
         return nothing
     end
 
 
-    # Indexed Fq functions
+    # ---- [ Indexed Fq functions ]
+
     function local_Fq(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_Fq::AbstractVector{Int64}) where {S <: Real, T <: Real}  
         return mm_fd_dn_Fq_i(dimspec, Fq_i, x, pr, ps, idxs_Fq)
     end
@@ -162,8 +157,8 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
     end
 
 
+    # ---- [ gradf functions ]
 
-    # gradf functions
     function local_gradf(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}  
         return mm_fd_dn_gradf(dimspec, f, x, pr, ps)
     end
@@ -174,7 +169,8 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
     end
 
 
-    # Full jacce functions
+    # ---- [ Full jacce functions ]
+
     function local_jacce(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
         return mm_fd_dn_jacce(dimspec, ce, x, pr, ps)
     end
@@ -185,7 +181,8 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
     end
 
 
-    # Indexed jacce functions
+    # ---- [ Indexed jacce functions ]
+
     function local_jacce(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ce::AbstractVector{Int64}) where {S <: Real, T <: Real}
         return mm_fd_dn_jacce_i(dimspec, ce_i, x, pr, ps, idxs_ce)
     end
@@ -196,7 +193,8 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
     end
 
 
-    # Full jacci functions
+    # ---- [ Full jacci functions ]
+
     function local_jacci(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
         return mm_fd_dn_jacci(dimspec, ci, x, pr, ps)
     end
@@ -207,7 +205,8 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
     end
 
 
-    # Indexed jacci functions
+    # ---- [ Indexed jacci functions ]
+
     function local_jacci(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ci::AbstractVector{Int64}) where {S <: Real, T <: Real}
         return mm_fd_dn_jacci_i(dimspec, ci_i, x, pr, ps, idxs_ci)
     end
@@ -219,7 +218,8 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
 
 
  
-    # Full gradF functions
+    # ---- [ Full gradF functions ]
+
     function local_gradF(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
         return mm_fd_dn_gradF(dimspec, F, x, pr, ps)
     end
@@ -229,8 +229,9 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
         return nothing
     end
 
-    # Indexed gradF functions
-    # NOTE, these yeild a vector in the order that the (l,q) index tuples were in!
+
+    # ---- [ Indexed gradF functions ]; NOTE, these yeild a vector in the order that the (l,q) index tuples were in!
+
     function local_gradF(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_F::Vector{CartesianIndex{2}}) where {S <: Real, T <: Real}
         return mm_fd_dn_gradF_i(dimspec, F_i, x, pr, ps, idxs_F)
     end
@@ -252,8 +253,8 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
     end
 
 
+    # ---- [ Full gradFq functions ]
 
-    # Full gradFq functions
     function local_gradFq(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
         return mm_fd_dn_gradFq(dimspec, Fq, x, pr, ps)
     end
@@ -263,7 +264,9 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
         return nothing
     end
 
-    # Indexed gradF functions
+
+    # ---- [ Indexed gradF functions ]
+
     function local_gradFq(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_Fq::AbstractVector{Int64}) where {S <: Real, T <: Real}
         return mm_fd_dn_gradFq_i(dimspec, Fq_i, x, pr, ps, idxs_Fq)
     end
@@ -274,7 +277,8 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
     end
 
 
-    # Hessian f functions (we don't do indexed version for this)
+    # ---- [ Hessian f functions ] (we don't do indexed version for this)
+
     function local_hessf(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
         return mm_fd_dn_hessf(dimspec, f, x, pr, ps)
     end
@@ -285,19 +289,20 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
     end
 
 
-    # Full hessce functions
-        # Vector of length me of 2d Hessian matrices
+    # ---- [ Full hessce functions ]
+
     function local_hessce(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
         return mm_fd_dn_hessce(dimspec, ce_i, x, pr, ps)
     end
 
-    # function local_hessce!(out_hessce::AbstractVector{AbstractMatrix{R}}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64})::Nothing where {R <: Real, S <: Real, T <: Real}
     function local_hessce!(out_hessce::AbstractVector, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64})::Nothing where {S <: Real, T <: Real}
         mm_fd_dn_hessce!(out_hessce, dimspec, ce_i, x, pr, ps)
         return nothing
     end
 
-    # Indexed hessce functions
+
+    # ---- [ Indexed hessce functions ]
+
     function local_hessce(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ce::AbstractVector{Int64}) where {S <: Real, T <: Real}
         return mm_fd_dn_hessce_i(dimspec, ce_i, x, pr, ps, idxs_ce)
     end
@@ -308,10 +313,8 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
     end
 
 
+    # ---- [ Full hessci functions ]
 
-
-    # Full hessci functions
-    # Vector of length me of 2d Hessian matricis
     function local_hessci(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
         return mm_fd_dn_hessci(dimspec, ci_i, x, pr, ps)
     end
@@ -321,7 +324,8 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
         return nothing
     end
 
-    # Indexed hessci functions
+
+    # ---- [ Indexed hessci functions ]
     function local_hessci(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ci::AbstractVector{Int64}) where {S <: Real, T <: Real}
         return mm_fd_dn_hessci_i(dimspec, ci_i, x, pr, ps, idxs_ci)
     end
@@ -332,9 +336,7 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
     end
     
     
-
-
-    # Full hessF functions
+    # ---- [ Full hessF functions ]
     function local_hessF(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}  # ::Matrix{Matrix{S}}
         return mm_fd_dn_hessF(dimspec, F_i, x, pr, ps)
     end
@@ -344,8 +346,8 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
         return nothing
     end
 
-    # Indexed hessF functions
-    # NOTE, these yeild a vector in the order that the (l,q) index tuples were in!
+
+    # ---- [ Indexed hessF functions ]; NOTE, these yeild a vector in the order that the (l,q) index tuples were in!
     function local_hessF(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_F::Vector{CartesianIndex{2}}) where {S <: Real, T <: Real}
         return mm_fd_dn_hessF_i(dimspec, F_i, x, pr, ps, idxs_F)
     end
@@ -367,9 +369,7 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
     end
 
 
-
-
-    # Full hessFq functions
+    # ---- [ Full hessFq functions ]
     
     function local_hessFq(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
         return mm_fd_dn_hessFq(dimspec, Fq_i, x, pr, ps)
@@ -381,7 +381,8 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
         return nothing
     end
 
-    # Indexed hessFq functions
+
+    # ---- [ Indexed hessFq functions ]
     function local_hessFq(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_Fq::AbstractVector{Int64}) where {S <: Real, T <: Real}
         return mm_fd_dn_hessFq_i(dimspec, Fq_i, x, pr, ps, idxs_Fq)
     end
@@ -393,14 +394,11 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
     end
     
 
+    # ---- [ Full fdp functions ]
 
-
-
-
-    # fdp functions
     function local_fdp(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}   # ::AbstractVector{T}
         return mm_fd_dn_fdp(dimspec, f, x, pr, ps)
-    end
+    end    
 
     function local_fdp!(out_fdp::AbstractVector, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64})::Nothing where {S <: Real, T <: Real}
         mm_fd_dn_fdp!(out_fdp, dimspec, f, x, pr, ps)
@@ -408,7 +406,8 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
     end
 
 
-    # Full cedp functions
+    # ---- [ Full cedp functions ]
+
     function local_cedp(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}  # ::Vector{Vector{S}}
         return mm_fd_dn_cedp(dimspec, ce, x, pr, ps)
     end
@@ -419,7 +418,8 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
     end
 
 
-    # Indexed cedp functions
+    # ---- [ Indexed cedp functions ]
+
     function local_cedp(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ce::AbstractVector{Int64}) where {S <: Real, T <: Real}  # Vector{Vector} ret vector of len r, of vectors of len idx
         return mm_fd_dn_cedp_i(dimspec, ce_i, x, pr, ps, idxs_ce)
     end
@@ -430,7 +430,8 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
     end
 
 
-    # Full cidp functions
+    # ---- [ Full cidp functions ]
+
     function local_cidp(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}  # ::Vector{Vector{S}}
         return mm_fd_dn_cidp(dimspec, ci, x, pr, ps)
     end
@@ -441,7 +442,7 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
     end
 
 
-    # Indexed cidp functions
+    # ---- [ Indexed cidp functions ]
     function local_cidp(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ci::AbstractVector{Int64}) where {S <: Real, T <: Real}  # Vector{Vector} ret vector of len r, of vectors of len idx
         return mm_fd_dn_cidp_i(dimspec, ci_i, x, pr, ps, idxs_ci)
     end
@@ -452,9 +453,8 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
     end
 
 
+    # ---- [ Full Fdp functions ]
 
-
-    # Full Fdp functions
     function local_Fdp(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}   # ::Vector{Matrix{T}}
         return mm_fd_dn_Fdp(dimspec, F, x, pr, ps)
     end
@@ -464,8 +464,9 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
         return nothing
     end
 
-    # Indexed Fdp functions
-    # NOTE, these yeild a vector in the order that the (l,q) index tuples were in!
+
+    # ---- [ Indexed Fdp functions ]; NOTE, these yeild a vector in the order that the (l,q) index tuples were in!
+
     function local_Fdp(x::AbstractVector{T}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_F::Vector{CartesianIndex{2}})::Vector{Vector{T}} where {T <: Real}
         return mm_fd_dn_Fdp_i(dimspec, F_i, x, pr, ps, idxs_F)
     end
@@ -487,7 +488,7 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
     end
 
 
-    # Full gradfdp functions
+    # ---- [ Full gradfdp functions ]
     function local_gradfdp(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}   # ::Vector{Vector{T}}
         return mm_fd_dn_gradfdp(dimspec, f, x, pr, ps)
     end
@@ -498,8 +499,7 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
     end
 
 
-
-    # Full jaccedp functions
+    # ---- [ Full jaccedp functions ]
     function local_jaccedp(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}  # ::Vector{Matrix{S}}
         return mm_fd_dn_jaccedp(dimspec, ce, x, pr, ps)
     end
@@ -510,7 +510,7 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
     end
 
 
-    # Indexed jaccedp functions
+    # ---- [ ndexed jaccedp functions ]
     function local_jaccedp(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ce::AbstractVector{Int64})::Vector{Matrix{T}} where {S <: Real, T <: Real}
         return mm_fd_dn_jaccedp_i(dimspec, ce_i, x, pr, ps, idxs_ce)
     end
@@ -521,7 +521,7 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
     end
 
 
-    # Full jaccidp functions
+    # ---- [ Full jaccidp functions ]
     function local_jaccidp(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
         return mm_fd_dn_jaccidp(dimspec, ci, x, pr, ps)
     end
@@ -532,7 +532,7 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
     end
 
 
-    # Indexed jaccidp functions
+    # ---- [ Indexed jaccidp functions ]
     function local_jaccidp(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ci::AbstractVector{Int64})::Vector{Matrix{S}} where {S <: Real, T <: Real}
         return mm_fd_dn_jaccidp_i(dimspec, ci_i, x, pr, ps, idxs_ci)
     end
@@ -543,7 +543,7 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
     end
 
 
-    # Full gradFdp functions
+    # ---- [ Full gradFdp functions ]
     function local_gradFdp(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
         return mm_fd_dn_gradFdp(dimspec, F_i, x, pr, ps)
     end
@@ -554,7 +554,7 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
     end
 
     
-    # Indexed gradFdp functions
+    # ---- [ Indexed gradFdp functions ]
     function local_gradFdp(x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_F::Vector{CartesianIndex{2}}) where {S <: Real, T <: Real}
         return mm_fd_dn_gradFdp_i(dimspec, F_i, x, pr, ps, idxs_F)
     end
@@ -574,7 +574,6 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
         mm_fd_dn_gradFdp_i!(out_gradFdp_i, dimspec, F_i, x, pr, ps, new_idxs_F)
         return nothing
     end
-
 
 
     return MPCCModelDenseForwardDiff(   config,
@@ -601,8 +600,6 @@ function mpccmodel_setup_forwarddiff_dense(config::MPCCModelConfig)
                         local_jaccedp, local_jaccedp!,
                         local_jaccidp, local_jaccidp!,
                         local_gradFdp, local_gradFdp!
-                        # local_do_self_test,
-                        # nz_mask 
                     )
 end
 
@@ -612,6 +609,7 @@ end
 
 
 # Indexed ce functions
+
 function mm_fd_dn_ce_i(dimspec::MPCCDimSpec, ce_i::AbstractVector{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ce::AbstractVector{Int64}) where {F <: Function, S <: Real, T <: Real} 
     P = promote_type(S, T)
     res_ce_i = P[ ce_i[idxs_ce[lp_ce]](x, pr, ps)[1] for lp_ce in eachindex(idxs_ce) ]
@@ -628,6 +626,7 @@ end
 
 
 # Indexed ci functions
+
 function mm_fd_dn_ci_i(dimspec::MPCCDimSpec, ci_i::AbstractVector{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ci::AbstractVector{Int64}) where {F <: Function, S <: Real, T <: Real}
     P = promote_type(S, T)
     res_ci_i = P[ ci_i[idxs_ci[lp_ci]](x, pr, ps)[1] for lp_ci in eachindex(idxs_ci) ]
@@ -644,6 +643,7 @@ end
 
 
 # Indexed F functions; NOTE, these yeild a vector in the order that the (l,q) index tuples were in!
+
 function mm_fd_dn_F_i(dimspec::MPCCDimSpec, F_i::AbstractMatrix{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_F::Vector{CartesianIndex{2}}) where {F <: Function, S <: Real, T <: Real}
     P = promote_type(S, T)
     res_F_i = P[ F_i[idxs_F[lp_F]](x, pr, ps)[1] for lp_F in eachindex(idxs_F) ]
@@ -660,8 +660,8 @@ end
 
 
 
-
 # Indexed Fq functions
+
 function mm_fd_dn_Fq_i(dimspec::MPCCDimSpec, Fq_i::AbstractVector{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_Fq::AbstractVector{Int64}) where {F <: Function, S <: Real, T <: Real} 
     P = promote_type(S, T)
     res_Fq_i = P[ Fq_i[idxs_Fq[lp_Fq]](x, pr, ps)[1] for lp_Fq in eachindex(idxs_Fq) ]
@@ -674,8 +674,6 @@ function mm_fd_dn_Fq!(out_Fq_i::AbstractArray, dimspec::MPCCDimSpec, Fq_i!::Abst
     end
     return nothing
 end
-
-
 
 
 
@@ -696,9 +694,8 @@ end
 
 
 
-
-
 # Full jacce functions
+
 function mm_fd_dn_jacce(dimspec::MPCCDimSpec, ce::Function, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
     P = promote_type(S, T)
 
@@ -725,7 +722,9 @@ function mm_fd_dn_jacce!(out_jacce::AbstractArray, dimspec::MPCCDimSpec, ce!::Fu
 end
 
 
+
 # Indexed jacce functions
+
 function mm_fd_dn_jacce_i(dimspec::MPCCDimSpec, ce_i::AbstractVector{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ce::AbstractVector{Int64}) where {F <: Function, S <: Real, T <: Real}
     P = promote_type(S, T)
     local_ce = (z::AbstractArray) -> mm_fd_dn_ce_i(dimspec, ce_i, z, pr, ps, idxs_ce)
@@ -747,11 +746,8 @@ end
 
 
 
-
-
-
-
 # Full jacci functions
+
 function mm_fd_dn_jacci(dimspec::MPCCDimSpec, ci::Function, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
     P = promote_type(S, T)
 
@@ -778,7 +774,9 @@ function mm_fd_dn_jacci!(out_jacci::AbstractArray, dimspec::MPCCDimSpec, ci!::Fu
 end
 
 
+
 # Indexed jacci functions
+
 function mm_fd_dn_jacci_i(dimspec::MPCCDimSpec, ci_i::AbstractVector{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ci::AbstractVector{Int64}) where {F <: Function, S <: Real, T <: Real}
     P = promote_type(S, T)
     local_ci = (z::AbstractArray) -> mm_fd_dn_ci_i(dimspec, ci_i, z, pr, ps, idxs_ci)
@@ -800,13 +798,7 @@ end
 
 
 
-
-
-
-
-
 # Full gradF functions
-# # Matrix of dim l x q of n length vectors (the gradients wrt x)
 
 function mm_fd_dn_gradF(dimspec::MPCCDimSpec, F::Function, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}   # ::Matrix{Vector{S}}
     P = promote_type(S, T)
@@ -845,6 +837,7 @@ end
 
 
 # Indexed gradF functions
+
 function mm_fd_dn_gradF_i(dimspec::MPCCDimSpec, F_i::AbstractMatrix{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_F::Vector{CartesianIndex{2}}) where {F <: Function, S <: Real, T <: Real}
     P = promote_type(S, T)
     @unpack n, l, q = dimspec
@@ -872,13 +865,13 @@ end
 
 
 
-
 # Full gradFq functions
+
 function mm_fd_dn_gradFq(dimspec::MPCCDimSpec, Fq::Function, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
     P = promote_type(S, T)
 
     # Shortcut for empty result: ensures type stable (fails assert with FD), and gets dimensions correct
-    if ( 0 == dimspec.l || 0 == dimspec.q )
+    if (0 == dimspec.l || 0 == dimspec.q)
         return Matrix{P}(undef, dimspec.q, dimspec.n)
     end
     
@@ -901,8 +894,8 @@ end
 
 
 
-
 # Indexed gradFq functions
+
 function mm_fd_dn_gradFq_i(dimspec::MPCCDimSpec, Fq_i::AbstractVector{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_Fq::AbstractVector{Int64}) where {F <: Function, S <: Real, T <: Real} 
     P = promote_type(S, T)
     local_Fq = (z::AbstractArray) -> mm_fd_dn_Fq_i(dimspec, Fq_i, z, pr, ps, idxs_Fq)
@@ -917,17 +910,10 @@ function mm_fd_dn_gradFq_i!(out_gradFq_i::AbstractArray, dimspec::MPCCDimSpec, F
 
     # ForwardDiff asks for a temporary storage area, presumably so that caller can manage memory allocs
     # We do this here for now, perhaps move it upstream later.
-    y = zeros(promote_type(S, T), len_idxs_Fq_i)
-    
-    # Unfortuantely, forewarddiff.jacobian returns the transpose of what we want.
-    # So, currently, we're stuck allocating again: TODO sort this
+    y = zeros(promote_type(S, T), len_idxs_Fq_i)    
     ForwardDiff.jacobian!(out_gradFq_i, local_Fq!, y, x)
     return nothing        
 end
-
-
-
-
 
 
 
@@ -948,10 +934,6 @@ end
 
 
 
-
-
-
-
 # Full hessce functions
 
 function mm_fd_dn_hessce(dimspec::MPCCDimSpec, ce_i::AbstractVector{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {F <: Function, S <: Real, T <: Real}
@@ -967,6 +949,7 @@ function mm_fd_dn_hessce!(out_hessce::AbstractArray, dimspec::MPCCDimSpec, ce_i:
     mm_fd_dn_hessce_i!(out_hessce, dimspec, ce_i, x, pr, ps, idxs_ce)
     return nothing
 end
+
 
 
 # Indexed hessce functions
@@ -1000,8 +983,6 @@ end
 
 
 
-
-
 # Full hessci functions
 
 function mm_fd_dn_hessci(dimspec::MPCCDimSpec, ci_i::AbstractVector{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {F <: Function, S <: Real, T <: Real}
@@ -1017,6 +998,7 @@ function mm_fd_dn_hessci!(out_hessci::AbstractArray, dimspec::MPCCDimSpec, ci_i:
     mm_fd_dn_hessci_i!(out_hessci, dimspec, ci_i, x, pr, ps, idxs_ci)
     return nothing
 end
+
 
 
 # Indexed hessci functions
@@ -1050,13 +1032,7 @@ end
 
 
 
-
-
-
-
-
 # Full hessF functions
-# # Matrix of dim l x q of n length vectors (the hessians wrt x)
 
 function mm_fd_dn_hessF(dimspec::MPCCDimSpec, F_i::AbstractMatrix{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {F <: Function, S <: Real, T <: Real}   # ::Matrix{Matrix{S}}
     P = promote_type(S, T)
@@ -1092,6 +1068,7 @@ end
 
 
 # Indexed hessF functions
+
 function mm_fd_dn_hessF_i(dimspec::MPCCDimSpec, F_i::AbstractMatrix{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_F::Vector{CartesianIndex{2}}) where {F <: Function, S <: Real, T <: Real}
     P = promote_type(S, T)
     @unpack n, l, q = dimspec
@@ -1119,8 +1096,6 @@ end
 
 
 
-
-
 # Full hessFq functions
 
 function mm_fd_dn_hessFq(dimspec::MPCCDimSpec, Fq_i::AbstractVector{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {F <: Function, S <: Real, T <: Real}
@@ -1128,6 +1103,7 @@ function mm_fd_dn_hessFq(dimspec::MPCCDimSpec, Fq_i::AbstractVector{F}, x::Abstr
     idxs_Fq = collect(1:dimspec.q)
     return mm_fd_dn_hessFq_i(dimspec, Fq_i, x, pr, ps, idxs_Fq::AbstractVector{Int64})    
 end
+
 
 
 # Indexed hessFq functions
@@ -1146,11 +1122,6 @@ function mm_fd_dn_hessFq_i(dimspec::MPCCDimSpec, Fq_i::AbstractVector{F}, x::Abs
     end
     return hessFq_i
 end
-
-
-
-
-
 
 
 
@@ -1173,11 +1144,8 @@ end
 
 
 
-
-
-
 # Full cedp functions
-# # Vector of length r of vectors of length me
+
 function mm_fd_dn_cedp(dimspec::MPCCDimSpec, ce::Function, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}    
     @assert dimspec.r > 0 "r must be positive for parametric calls"
     P = promote_type(S, T)
@@ -1214,7 +1182,9 @@ function mm_fd_dn_cedp!(out_cedp::AbstractArray, dimspec::MPCCDimSpec, ce!::Func
 end
 
 
+
 # Indexed cedp functions
+
 function mm_fd_dn_cedp_i(dimspec::MPCCDimSpec, ce_i::AbstractVector{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ce::AbstractVector{Int64}) where {F <: Function, S <: Real, T <: Real}
     @assert dimspec.r > 0 "r must be positive for parametric calls"
     P = promote_type(S, T)
@@ -1231,7 +1201,7 @@ function mm_fd_dn_cedp_i!(out_cedp::AbstractArray, dimspec::MPCCDimSpec, ce_i!::
     @unpack me, r = dimspec
     len_idxs_ce_i = length(idxs_ce)
     local_ce! = (y::AbstractArray, qr::AbstractArray) -> mm_fd_dn_ce_i!(y, dimspec, ce_i!, x, qr, ps, idxs_ce)
-    # mm_fd_dn_ce_i!(out_ce_i::AbstractVector{R}, dimspec::MPCCDimSpec, ce_i!::AbstractVector{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ce::AbstractVector{Int64})::Nothing where {F <: Function, R <: Real, S <: Real, T <: Real}
+    
     # ForwardDiff asks for a temporary storage area, presumably so that caller can manage memory allocs
     # We do this here for now, perhaps move it upstream later.
     y = zeros(promote_type(S, T), len_idxs_ce_i)
@@ -1247,10 +1217,8 @@ end
 
 
 
-
-
 # Full cidp functions
-# # Vector of length r of vectors of length mi
+
 function mm_fd_dn_cidp(dimspec::MPCCDimSpec, ci::Function, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}    
     @assert dimspec.r > 0 "r must be positive for parametric calls"
     P = promote_type(S, T)
@@ -1287,7 +1255,9 @@ function mm_fd_dn_cidp!(out_cidp::AbstractArray, dimspec::MPCCDimSpec, ci!::Func
 end
 
 
+
 # Indexed cidp functions
+
 function mm_fd_dn_cidp_i(dimspec::MPCCDimSpec, ci_i::AbstractVector{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ci::AbstractVector{Int64}) where {F <: Function, S <: Real, T <: Real}
     @assert dimspec.r > 0 "r must be positive for parametric calls"
     P = promote_type(S, T)
@@ -1304,7 +1274,7 @@ function mm_fd_dn_cidp_i!(out_cidp::AbstractArray, dimspec::MPCCDimSpec, ci_i!::
     @unpack mi, r = dimspec
     len_idxs_ci_i = length(idxs_ci)
     local_ci! = (y::AbstractArray, qr::AbstractArray) -> mm_fd_dn_ci_i!(y, dimspec, ci_i!, x, qr, ps, idxs_ci)
-    # mm_fd_dn_ci_i!(out_ci_i::AbstractVector{R}, dimspec::MPCCDimSpec, ci_i!::AbstractVector{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ci::AbstractVector{Int64})::Nothing where {F <: Function, R <: Real, S <: Real, T <: Real}
+
     # ForwardDiff asks for a temporary storage area, presumably so that caller can manage mimory allocs
     # We do this here for now, perhaps move it upstream later.
     y = zeros(promote_type(S, T), len_idxs_ci_i)
@@ -1317,10 +1287,6 @@ function mm_fd_dn_cidp_i!(out_cidp::AbstractArray, dimspec::MPCCDimSpec, ci_i!::
     end
     return nothing
 end
-
-
-
-
 
 
 
@@ -1347,7 +1313,6 @@ function mm_fd_dn_Fdp(dimspec::MPCCDimSpec, F::Function, x::AbstractVector{S}, p
 end
 
 
-
 function mm_fd_dn_Fdp!(out_Fdp::AbstractArray, dimspec::MPCCDimSpec, F!::Function, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64})::Nothing where {S <: Real, T <: Real}
     @assert dimspec.r > 0 "r must be positive for parametric calls"
     @unpack n, l, q, r = dimspec
@@ -1368,6 +1333,7 @@ end
 
 
 # Indexed Fdp
+
 function mm_fd_dn_Fdp_i(dimspec::MPCCDimSpec, F_i::AbstractMatrix{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_F::Vector{CartesianIndex{2}}) where {F <: Function, S <: Real, T <: Real}
     @assert dimspec.r > 0 "r must be positive for parametric calls"
     P = promote_type(S, T)
@@ -1405,9 +1371,6 @@ end
 
 
 
-
-
-
 # Full gradfdp functions
 
 function mm_fd_dn_gradfdp(dimspec::MPCCDimSpec, f::Function, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
@@ -1436,10 +1399,8 @@ end
 
 
 
-
-
-
 # Full jaccedp functions
+
 function mm_fd_dn_jaccedp(dimspec::MPCCDimSpec, ce::Function, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
     @assert dimspec.r > 0 "r must be positive for parametric calls"
     P = promote_type(S, T)
@@ -1473,7 +1434,9 @@ function mm_fd_dn_jaccedp!(out_jaccedp::AbstractArray, dimspec::MPCCDimSpec, ce!
 end
 
 
+
 # Indexed jaccedp
+
 function mm_fd_dn_jaccedp_i(dimspec::MPCCDimSpec, ce_i::AbstractVector{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ce::AbstractVector{Int64}) where {F <: Function, S <: Real, T <: Real}
     @assert dimspec.r > 0 "r must be positive for parametric calls"
     P = promote_type(S, T)
@@ -1484,7 +1447,6 @@ function mm_fd_dn_jaccedp_i(dimspec::MPCCDimSpec, ce_i::AbstractVector{F}, x::Ab
     jaccedp = [ reshape(jaccedp_flat[:, lp_pr], (len_idxs_ce_i, n)) for lp_pr in 1:r ]
     return jaccedp
 end
-
 
 
 function mm_fd_dn_jaccedp_i!(out_jaccedp::AbstractArray, dimspec::MPCCDimSpec, ce_i!::AbstractVector{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ce::AbstractVector{Int64})::Nothing where {F <: Function, S <: Real, T <: Real}
@@ -1505,11 +1467,8 @@ end
 
 
 
-
-
-
-
 # Full jaccidp functions
+
 function mm_fd_dn_jaccidp(dimspec::MPCCDimSpec, ci::Function, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {S <: Real, T <: Real}
     @assert dimspec.r > 0 "r must be positive for parametric calls"
     P = promote_type(S, T)
@@ -1543,7 +1502,9 @@ function mm_fd_dn_jaccidp!(out_jaccidp::AbstractArray, dimspec::MPCCDimSpec, ci!
 end
 
 
+
 # Indexed jaccidp
+
 function mm_fd_dn_jaccidp_i(dimspec::MPCCDimSpec, ci_i::AbstractVector{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_ci::AbstractVector{Int64}) where {F <: Function, S <: Real, T <: Real}
     @assert dimspec.r > 0 "r must be positive for parametric calls"
     P = promote_type(S, T)
@@ -1574,11 +1535,8 @@ end
 
 
 
-
-
-
-
 # Full gradFdp functions
+
 function mm_fd_dn_gradFdp(dimspec::MPCCDimSpec, F_i::AbstractMatrix{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {F <: Function, S <: Real, T <: Real}   # ::Vector{Matrix{Vector{S}}}
     @assert dimspec.r > 0 "r must be positive for parametric calls"
     P = promote_type(S, T)
@@ -1596,7 +1554,6 @@ function mm_fd_dn_gradFdp(dimspec::MPCCDimSpec, F_i::AbstractMatrix{F}, x::Abstr
     end
     return gradFdp
 end
-
 
 
 function mm_fd_dn_gradFdp!(out_gradFdp::AbstractArray, dimspec::MPCCDimSpec, F_i::AbstractMatrix{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}) where {F <: Function, S <: Real, T <: Real}
@@ -1630,6 +1587,7 @@ end
 
 
 # Indexed gradFdp functions
+
 function mm_fd_dn_gradFdp_i(dimspec::MPCCDimSpec, F_i::AbstractMatrix{F}, x::AbstractVector{S}, pr::AbstractVector{T}, ps::AbstractVector{Int64}, idxs_F::Vector{CartesianIndex{2}}) where {F <: Function, S <: Real, T <: Real}   # ::Vector{Matrix{Vector{S}}}
     @assert dimspec.r > 0 "r must be positive for parametric calls"
     P = promote_type(S, T)

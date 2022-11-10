@@ -1,9 +1,7 @@
 
 
 
-# TODO 20220708: maybe change function names gradxx to jacxx
 
-# TODO: is it possible to allow calling fns without pr or ps; easier support for static models?
 
 
 export  MPCCDimSpec,
@@ -47,7 +45,6 @@ Determines the dimensions of a program.
 * me: numeber of inequality constraints
 * r: number of continuous parameters
 * s: number of integer parameters
-
 """
 struct MPCCDimSpec
     n::Int64		# Dimension of spatial variables
@@ -101,7 +98,6 @@ and F.
 * ce: vector of equality constraints ( == 0 )
 * ci: vector of inequality constraints ( >= 0 )
 * F: matrix l-by-q of complementarity constraints ( >= 0 )
-
 """
 struct MPCCDefinition
     f::Num
@@ -184,7 +180,7 @@ end
 """
     MPCCPointEvalReq
 
-When making a request to evaluate several things in one request, this bitmask
+When making a request to evaluate several things at once, this bitmask
 determines what will be evaluated.
 """
 struct MPCCPointEvalReq
@@ -319,7 +315,12 @@ Base.:(≈)(x::MPCCPointEval, y::MPCCPointEval) = (
 
 
 
+"""
+    MPCCModelTestVector
 
+What it says on the tin: vectors of `x``, `pr``, `ps`, and results under the same
+ordering.
+"""
 struct MPCCModelTestVector{R <: Real, S <: Real, T <: Real}
     x_val::Vector{S}
     pr_val::Vector{T}
@@ -328,10 +329,16 @@ struct MPCCModelTestVector{R <: Real, S <: Real, T <: Real}
 end
 
 
+
+
 """
     MPCCParameterisationDefn
 
-The definition for a parameterisation of a model, i.e. how the `pr` depends on `t`.
+The definition for a parameterisation of a model, i.e. how the `pr` depends on
+`t`.
+* pr: vector of Num expressions
+* tspan: closed t interval
+* descr: description
 """
 struct MPCCParameterisationDefn{R <: Real}
     pr::Vector{Num}
@@ -355,7 +362,8 @@ end
 """
     MPCCParameterisationFunctions
 
-Compilation of `MPCCParameterisationFunctions` into Julia functions, including derivative.
+Compilation of `MPCCParameterisationFunctions` into Julia functions, including
+derivative.
 """
 struct MPCCParameterisationFunctions
     pr::Function            # t -> Vector pr
@@ -363,6 +371,7 @@ struct MPCCParameterisationFunctions
     prdt::Function          # t -> Vector of d(pr) / dt
     prdt!::Function
 end
+
 
 
 """
@@ -387,7 +396,8 @@ Model config contains the Num variables for `x`, `pr`, `ps` along with the
 `MPCCDimSpec`, definition, compiled definition, any test vectors, any known
 solutions, and parameterisations. Basically everything that specifies a model.
 
-- parameterisations: if using a static model with r=0, then this should be set to missing
+Note re parameterisations: if using a static model with r=0, then this should be
+  set to missing
 """
 struct MPCCModelConfig
     x::Vector{Num}      # Symbolics variables
@@ -569,7 +579,12 @@ end
 
 
 
+"""
+    MPCCJumpFixedFunctions
 
+A cludge used in upstream MPCCTools to get JuMP working. Will likely remove when
+have no more need for it.
+"""
 struct MPCCJumpFixedFunctions
     jump_f::Function
     jump_f_pen::Function
@@ -579,7 +594,12 @@ struct MPCCJumpFixedFunctions
 end
 
 
-# Only std return functions for the moment
+
+"""
+    MPCCNewtonPenaltyFunctions
+
+DEV... only std return functions for the moment, likely removed later.
+"""
 struct MPCCNewtonPenaltyFunctions
     ϕ::Function
     gradϕ::Function
@@ -624,13 +644,13 @@ we actually save the model config because for display purposes, it allows us to
 list the actual constraint expressions.
 """
 struct MPCCConstraintSet
-    # dimspec::MPCCDimSpec
     config::MPCCModelConfig
     to_bi::Vector{Int64}
 end
 
-# Can't remember if I wrote this to avoid the crap with == and ===, neither of
-# which seem to do what I want.  But it works, so use is_eql() explicitly.
+# Can't remember if I wrote this to avoid the issue with == and ===, neither of
+# which will do recursive elementwise comparison.  But it works, so use is_eql()
+# explicitly.
 function is_eql(x::MPCCConstraintSet, y::MPCCConstraintSet)
     return ( x.to_bi == y.to_bi && x.dimspec == y.dimspec )
 end

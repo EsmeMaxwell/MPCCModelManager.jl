@@ -2,17 +2,38 @@
 
 !!! **DEVELOPMENT VERSION** -- There will be breaking changes to come.
 
-MPCCModelManager.jl is a package for managing parametric MPCC or NLP models. It
-takes a symbolic definition and produces a struct containing Julia functions
-that can compute standard derivatives (Jacobians, Hessians) including
-derivatives with respect to the parameteres. A subset of constraints can be
-specified in each function call.
+
+MPCCModelManager.jl is a package for managing parametric MPCC or NLP models of
+the form
+
+```math
+\begin{equation}
+\begin{aligned}
+\min_{x(p(t))} \quad & f(p(t), x(p(t))) \\
+\textrm{subject to} \quad & c_{\mathcal{E},i}(p(t), x(p(t))) = 0 \quad i = 1, \dots, m_{\mathcal{E}}\\
+& c_{\mathcal{I},i}(p(t), x(p(t))) \ge 0 \quad i = 1, \dots, m_{\mathcal{I}} \\
+& F_{i,j}(p(t), x(p(t))) \ge 0 \quad i = 1, \dots l, \; j = 1, \dots, q \\
+& \prod_{i=1}^{l} F_{i,j} = 0 \quad j = 1, \dots, q.
+\end{aligned}
+\end{equation}
+```math
+
+
+The idea is that one can supply a model definition in various formats such as a
+native Julia definition, JSON, etc.
+
+The library will then generate Julia native functions that will calculate the
+Jacobians, Hessians, and parameteric derivatives thereof. There is choice in how
+the derivatives are computed, e.g. dense matrix outputs via automatic
+differentiation (ForwardDiff.jl for now), sparse symbolic differentiation, etc.
+
+
 
 ## Installation
 
 The package is not registered yet, so this must be done manually at the moment.
 
-## Usage Description
+## Basic Usage Description
 
 Each model has a dimension specification `MPCCDimSpec`, which details:
 
@@ -24,11 +45,14 @@ Each model has a dimension specification `MPCCDimSpec`, which details:
 * `r`: The number of continuous parameters, which are assumed implicitly dependent on some real scalar, say "t".
 * `s`: The number of integer parameters, not used yet.
 
-Instantiate the model configuration. There are some samples included in the
-package (this functionality can be used at runtime though, without world-age
-issues)
+There are some sample models under `./src/model_samples`. In the future, this
+will be in a different package and there'll be functionality to import from
+JSON, etc. For the moment, when defining you own models, just follow the same
+pattern.
 
-`model_cfg = model_pmpcc_kj6_build();`
+Instantiate the model configuration, e.g. using the model kj3:
+
+`model_cfg = model_pmpcc_kj3_build();`
 
 This struct contains, amongst other things, the following fields:
 
@@ -49,7 +73,7 @@ ForwardDiff.jl.
 
 `model_fd = mpccmodel_setup_forwarddiff_dense(model_cfg);`
 
-This returns a struct which includes the model configuration, and also the following functions (standard and mutating)
+This returns a struct which includes the model configuration, and also the following functions (standard and mutating).
 
 * `f`, `f!`: Objective function (scalar, I think).
 * `ce`, `ce!`: Equality constraints (vector).
@@ -74,5 +98,7 @@ This returns a struct which includes the model configuration, and also the follo
 * `jaccedp`, `jaccedp!`: Gradient wrt `pr` of Jacobian of `ce` (vector of length `r` of matrix of size `me` by `n`)
 * `jaccidp`, `jaccidp!`: Gradient wrt `pr` of Jacobian of `ci` (vector of length `r` of matrix of size `mi` by `n`)
 * `gradFdp`, `gradFdp!`: Gradient wrt `pr` of spatial gradients of `F` (vector of length `r` or matrix of size `l` by `q` of vector of length `n`)
+
+Each of the functions accepts a primal position `x`, continuous parameters `pr` ($p$ in the model), and discrete parameters `ps`.
 
 

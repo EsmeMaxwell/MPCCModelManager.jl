@@ -8,7 +8,15 @@ RuntimeGeneratedFunctions.init(@__MODULE__)
 
 
 
-# Shit we might provide a method for using our custom types
+# TODO
+# - remove line numbers from generated functions, inline what need inlined, remove bounds checks where appropriate
+# - perhaps make more generic by defining all the operations in a custom sense.  Perhaps a 2.0 type of thing.
+# - check ForwardDiff cfg
+# - saving of lower order derivatives?
+# - is it possible to allow calling fns without pr or ps; easier support for static models?
+
+
+# May need to provide a method for using our custom types
 import Base.show
 
 
@@ -59,26 +67,6 @@ export  cs_cpair_to_bi,
         cs_cnstr_build_all_active,
         cs_cnstr_get_Fq_count,
         cs_cnstr_get_all_active_bi
-
-
-
-# TODO
-# - remove line numbers from generated functions, inline what need inlined, remove bounds checks where appropriate
-
-# - change notation for jacce, etc, to jacce and then write proper jacce
-
-# TODO perhaps make more generic by defining all the operations in a custom sense.  Perhaps a 2.0 type of thing.
-
-
-# NOTE reminders to self:
-# - Type stability: return types should not depend on values but can depend on input types
-# - Use argument types for multiple dispatch, it does not improve performance in general
-# - Explicit return type annotation seems to degrate performance
-
-# TODO should probably inline the small functions in each model definition
-# TODO check ForwardDiff cfg
-# TODO saving of lower order derivatives?
-
 
 
 end

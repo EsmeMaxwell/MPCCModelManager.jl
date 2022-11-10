@@ -5,7 +5,8 @@
 """
     mpccmodel_build_sym_nums(dimspec::MPCCDimSpec)
 
-Returns Symbolics.jl Nums that correspond to the provided dimspec.
+Returns Symbolics.jl Num variable that correspond to the provided dimspec.
+See MPCCDimSpec definition for what each field means.
 """
 function mpccmodel_build_sym_nums(dimspec::MPCCDimSpec)
     @variables x[1:dimspec.n] pr[1:dimspec.r] ps[1:dimspec.s] t
@@ -24,16 +25,15 @@ to call directly as this is called from `mpccmodel_load_defn_from_file()`.
 
 **NOTE:** To understand how this works, one should also play with a few examples
 of`build_function()` in Symbolics.jl.  The output from `build_function()` is a
-2-element vector whereby the first element is the standard function adn the
+2-element vector whereby the first element is the standard function and the
 second is a mutating version of the same function. Hence the formulation in the
 code here.
 
 # Arguments
-- `dimspec::MPCCDimSpec`: The dimension specifications for the proram.
-- `defn::MPCCDefinition`: The Symbolics.jl Num definitions of the
+* `dimspec::MPCCDimSpec`: The dimension specifications for the proram.
+* `defn::MPCCDefinition`: The Symbolics.jl Num definitions of the
   expressions.
-- `x`, `pr`, `ps`: Symbolics.jl Num variables for x, pr, ps.
-
+* `x`, `pr`, `ps`: Symbolics.jl Num variables for x, pr, ps.
 """
 function mpccmodel_build_fn_from_defn(dimspec::MPCCDimSpec, defn::MPCCDefinition, x, pr, ps)
     @unpack n, q, l, me, mi = dimspec
@@ -44,15 +44,15 @@ function mpccmodel_build_fn_from_defn(dimspec::MPCCDimSpec, defn::MPCCDefinition
         Fq[lp_q] = prod(defn.F[:, lp_q])
     end
 
-    # Objective fn
+    # Objective fn; note that first argument to build_function() must be an array
     f_fn = build_function([ defn.f ], x, pr, ps; expression=Val{false}, linenumbers=false)
 
     # Whole vector / array functions
     ce_fn = build_function(defn.ce, x, pr, ps; expression=Val{false}, linenumbers=false)
     ci_fn = build_function(defn.ci, x, pr, ps; expression=Val{false}, linenumbers=false)
-    if ( l == 0 || q == 0 )
-        # Workaround for wee bug in Symbolics when trying to compile empty matrix
-        # it produces keech. So we hand it an empty vector instead.
+    if (l == 0 || q == 0)
+        # Workaround for wee bug in Symbolics: when trying to compile empty
+        # matrix it produces keech. So we hand it an empty vector instead.
         F_fn = build_function(Vector{Num}([]), x, pr, ps; expression=Val{false}, linenumbers=false)
     else
         F_fn = build_function(defn.F, x, pr, ps; expression=Val{false}, linenumbers=false)
@@ -90,7 +90,6 @@ function mpccmodel_build_fn_from_defn(dimspec::MPCCDimSpec, defn::MPCCDefinition
     Fq_i_fn_std = [ Fq_i_fn[lp_q][1] for lp_q=1:q ]
     Fq_i_fn_mut = [ Fq_i_fn[lp_q][2] for lp_q=1:q ]
 
-    
     return MPCCFunctions(
             f_fn[1], f_fn[2],
             ce_fn[1], ce_fn[2],
@@ -112,10 +111,8 @@ end
 
 Build parameterisation from `defns` and Symbolics Num `t`, returns struct with
 Julia native functions including derivatives.
-
 """
 function mpccmodel_build_parameterisation(defns::Vector{MPCCParameterisationDefn}, t::Num)
-
     len_defns = length(defns)
 
     fns = Vector{MPCCParameterisationFunctions}(undef, len_defns)
@@ -152,9 +149,9 @@ function mpccmodel_construct_config(
         defn::MPCCDefinition;
         pdefns::Opt{Vector{MPCCParameterisationDefn}} = missing,
         testvectors::Vector{MPCCModelTestVector} = Vector{MPCCModelTestVector}(undef, 0),
-        knownsols::Vector = Vector(undef, 0) )
+        knownsols::Vector = Vector(undef, 0))
 
-    @assert ( pdefns isa Vector{MPCCParameterisationDefn} ) || ismissing(pdefns) "pdefns must be either missing or vector of MPCCParameterisationDefn"
+    @assert (pdefns isa Vector{MPCCParameterisationDefn}) || ismissing(pdefns) "pdefns must be either missing or vector of MPCCParameterisationDefn"
     @assert testvectors isa Vector{MPCCModelTestVector} "testvectors must be, possibly empty, vector of MPCCModelTestVector"
     @assert knownsols isa Vector "knownsols should be a, possibly empty, vector"
 
@@ -185,7 +182,15 @@ end
 
 
 
+"""
+    mpccmodel_load_defn_from_file(model_id::String)
 
+A (mostly) deprecated function that loads a model definition at RUNTIME rather
+than compile time, i.e. it avoids world-age issues. This not as much use as one
+might expect and is largely kept around as a template for later then doing
+import/export of models to JSON files, etc, because these issues can be
+surprsingly subtle.
+"""
 function mpccmodel_load_defn_from_file(model_id::String)
 
     # TODO some sanity checking on model_id
@@ -210,7 +215,6 @@ function mpccmodel_load_defn_from_file(model_id::String)
 
     # We're getting the dimspec and setting up Symbolics.jl variables
     dimspec = Base.invokelatest(fn_dimspec)
-    # @variables x[1:dimspec.n] pr[1:dimspec.r] ps[1:dimspec.s] t
     (x, pr, ps) = mpccmodel_build_sym_nums(dimspec)
     
     # Grab the model definition, expressed in Symbolics.jl Num
@@ -242,8 +246,14 @@ end
 
 
 
-# Because JuMP is a bit shit, we need to construct scalar functions for it
-# We fix the parameter set here too.
+
+"""
+    mpccmodel_build_fixed_jump_fns(model::MPCCModelConfig, pr0::Vector{R}, ps0::Vector{Int64}) where {R <: Real}
+
+A cludge for upstream code in MPCCTools.jl. JuMP cannot handle usual array
+output, so we have to create scalar versions. Otherwise, nothing to do with this
+library.
+"""
 function mpccmodel_build_fixed_jump_fns(model::MPCCModelConfig, pr0::Vector{R}, ps0::Vector{Int64}) where {R <: Real}
 
     # Create suitable objective function for use in JuMP, fixing parameters
