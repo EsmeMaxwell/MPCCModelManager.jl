@@ -288,7 +288,7 @@ Build whole constraint set from bitmasks of the contraints for each type.
 function cs_cnstr_build_from_bitmask(config::MPCCModelConfig, ce_actv::BitVector, ci_actv::BitVector, F_actv::BitMatrix)
     @unpack n, q, l, me, mi = config.dimspec
 
-    # TODO we can do this faster if done manually, but can't be arsed at the moment
+    # TODO we can do this faster if done manually, but can't be bothered at the moment
     cnstr_idxs = MPCCConstraintSet(config, Int64[])
 
     # ce
@@ -328,7 +328,7 @@ Build a constraint set with all constraints included (active).
 function cs_cnstr_build_all_active(config::MPCCModelConfig)
     @unpack n, q, l, me, mi = config.dimspec
 
-    # TODO we can do this faster is done manually, but can't be arsed at the moment
+    # TODO we can do this faster is done manually, but can't be bothered at the moment
     cnstr_idxs = MPCCConstraintSet(config, Int64[])
 
     # ce

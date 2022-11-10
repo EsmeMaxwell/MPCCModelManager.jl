@@ -16,7 +16,7 @@ the form
 & \prod_{i=1}^{l} F_{i,j} = 0 \quad j = 1, \dots, q.
 \end{aligned}
 \end{equation}
-```math
+```
 
 
 The idea is that one can supply a model definition in various formats such as a
