@@ -8,7 +8,7 @@ RuntimeGeneratedFunctions.init(@__MODULE__)
 
 
 
-# TODO
+# TODO...
 # - remove line numbers from generated functions, inline what need inlined, remove bounds checks where appropriate
 # - perhaps make more generic by defining all the operations in a custom sense.  Perhaps a 2.0 type of thing.
 # - check ForwardDiff cfg
