@@ -1,5 +1,52 @@
 # Functions and structs
 
+## From ``mpccmodel_common.jl``
+
+Common structs, etc.
+
+```@docs
+MPCCModelManager.MPCCDimSpec
+```
+
+```@docs
+MPCCModelManager.MPCCDefinition
+```
+
+```@docs
+MPCCModelManager.MPCCFunctions
+```
+
+```@docs
+MPCCModelManager.MPCCParameterisationDefn
+```
+
+```@docs
+MPCCModelManager.MPCCParameterisationFunctions
+```
+
+```@docs
+MPCCModelManager.MPCCParameterisations
+```
+
+```@docs
+MPCCModelManager.MPCCModelConfig
+```
+
+```@docs
+MPCCModelManager.MPCCModelDenseForwardDiff
+```
+
+```@docs
+MPCCModelManager.MPCCActivesetCnstrType
+```
+
+```@docs
+MPCCModelManager.MPCCConstraintSet
+```
+
+
+
+
 ## From ``mpccmodel_proc_model.jl``
 
 These functions are used to process a model definition with end point producing
@@ -7,7 +54,7 @@ the model config struct which includes closures to construct `f`, `ce`, `ci`,
 `F` functions, parametrisations, etc.
 
 ```@docs
-MPCCModelMAnager.mpccmodel_build_sym_nums
+MPCCModelManager.mpccmodel_build_sym_nums
 ```
 
 ```@docs
