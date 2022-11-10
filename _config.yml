@@ -1,4 +1,4 @@
 # Jeykll config
 name: MPCCModelManager.jl
 markdown: GFM
-theme: ''
+theme: minima
