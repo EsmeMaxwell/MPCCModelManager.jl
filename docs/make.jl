@@ -7,6 +7,9 @@ using Documenter, MPCCModelManager
 makedocs(
     sitename = "MPCCModelManager.jl",
     authors = "Peter Maxwell",
+    clean = true,
+    doctest = false,
+    format = Documenter.HTML(),
     modules = [MPCCModelManager],
     pages = [
         "Home" => "index.md",
